@@ -8,27 +8,36 @@
 
 import UIKit
 
+protocol MyEditProtocol {
+    func setEditResult(valueSent: Item)
+}
+
 class EditViewController: UIViewController {
 
+    @IBOutlet weak var shortDescription: UITextField!
+    @IBOutlet weak var longDescription: UITextView!
+    
+    var delegate:MyEditProtocol?
+    var shortDesc: String!
+    var longDesc: String!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+        self.title = "Edit Item"
         let save = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveItem))
         self.navigationItem.rightBarButtonItem = save
+        shortDescription.text = shortDesc
+        longDescription.text = longDesc
     }
     
     @objc func saveItem() {
+        let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text)
+        delegate?.setEditResult(valueSent: newItem)
+        self.navigationController?.popViewController(animated: true)
         
     }
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
+    
 
 }

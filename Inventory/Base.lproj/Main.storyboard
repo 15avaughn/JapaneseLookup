@@ -46,11 +46,16 @@
                                                 </label>
                                             </subviews>
                                         </tableViewCellContentView>
+                                        <accessibility key="accessibilityConfiguration" identifier="cell"/>
                                         <connections>
                                             <segue destination="5W0-z0-EoY" kind="show" identifier="editSegue" id="8Y4-LQ-cfh"/>
                                         </connections>
                                     </tableViewCell>
                                 </prototypes>
+                                <connections>
+                                    <outlet property="dataSource" destination="BYZ-38-t0r" id="1w9-pe-YvG"/>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="Osf-bd-3sL"/>
+                                </connections>
                             </tableView>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -63,6 +68,9 @@
                             </connections>
                         </barButtonItem>
                     </navigationItem>
+                    <connections>
+                        <outlet property="tableView" destination="vfy-Qi-342" id="amC-F2-6E2"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
@@ -107,6 +115,10 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="Tp6-GW-L1O"/>
                     </view>
+                    <connections>
+                        <outlet property="longDescription" destination="etx-bQ-NV2" id="ZJU-Zg-hbA"/>
+                        <outlet property="shortDescription" destination="uJD-F8-By4" id="50R-1o-Pxh"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OaF-Qe-VPj" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -169,6 +181,10 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="eQc-F0-3b2"/>
                     </view>
+                    <connections>
+                        <outlet property="longDescription" destination="NLG-y1-2yS" id="445-0T-P7S"/>
+                        <outlet property="shortDescription" destination="Hgl-pO-NC4" id="0IO-Oa-eeU"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="oV5-oJ-996" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
