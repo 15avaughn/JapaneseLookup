@@ -1,4 +1,4 @@
-// Jenkinsfile for Inventory in CS 3260
+// Jenkinsfile for Inventory2 in CS 3260
 // Students: Do not modify this file in any way.
 pipeline {
     agent {
@@ -9,7 +9,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building..'
-                sh 'cs3260inventorybuild'
+                sh 'cs3260inventory2build'
             }
             post {
                 failure {
@@ -21,7 +21,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing..'
-                sh 'cs3260inventorytest'
+                sh 'cs3260inventory2test'
             }
             post {
                 always {

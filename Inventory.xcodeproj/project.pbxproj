@@ -14,10 +14,10 @@
 		4E35BA6622C81A740067F276 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E35BA6422C81A740067F276 /* LaunchScreen.storyboard */; };
 		4E35BA7122C81A740067F276 /* InventoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E35BA7022C81A740067F276 /* InventoryTests.swift */; };
 		4E35BA7C22C81A740067F276 /* InventoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E35BA7B22C81A740067F276 /* InventoryUITests.swift */; };
-		4E35BA8A22C81A920067F276 /* Jenkinsfile in Resources */ = {isa = PBXBuildFile; fileRef = 4E35BA8922C81A920067F276 /* Jenkinsfile */; };
-		4E35BA8C22C81A9E0067F276 /* InventoryUITestsCS3260.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E35BA8B22C81A9E0067F276 /* InventoryUITestsCS3260.swift */; };
 		4E35BA9022C81C670067F276 /* EditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E35BA8F22C81C670067F276 /* EditViewController.swift */; };
 		4E35BA9222C81C750067F276 /* AddViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E35BA9122C81C750067F276 /* AddViewController.swift */; };
+		4E60F0F522DA67D200785A9F /* Jenkinsfile in Resources */ = {isa = PBXBuildFile; fileRef = 4E60F0F422DA67D200785A9F /* Jenkinsfile */; };
+		4E60F0F722DA67F500785A9F /* Inventory2UITestsCS3260.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E60F0F622DA67F500785A9F /* Inventory2UITestsCS3260.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,10 +51,10 @@
 		4E35BA7722C81A740067F276 /* InventoryUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InventoryUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E35BA7B22C81A740067F276 /* InventoryUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryUITests.swift; sourceTree = "<group>"; };
 		4E35BA7D22C81A740067F276 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4E35BA8922C81A920067F276 /* Jenkinsfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Jenkinsfile; sourceTree = "<group>"; };
-		4E35BA8B22C81A9E0067F276 /* InventoryUITestsCS3260.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InventoryUITestsCS3260.swift; sourceTree = "<group>"; };
 		4E35BA8F22C81C670067F276 /* EditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditViewController.swift; sourceTree = "<group>"; };
 		4E35BA9122C81C750067F276 /* AddViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddViewController.swift; sourceTree = "<group>"; };
+		4E60F0F422DA67D200785A9F /* Jenkinsfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Jenkinsfile; sourceTree = "<group>"; };
+		4E60F0F622DA67F500785A9F /* Inventory2UITestsCS3260.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Inventory2UITestsCS3260.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,7 +85,7 @@
 		4E35BA4F22C81A710067F276 = {
 			isa = PBXGroup;
 			children = (
-				4E35BA8922C81A920067F276 /* Jenkinsfile */,
+				4E60F0F422DA67D200785A9F /* Jenkinsfile */,
 				4E35BA5A22C81A710067F276 /* Inventory */,
 				4E35BA6F22C81A740067F276 /* InventoryTests */,
 				4E35BA7A22C81A740067F276 /* InventoryUITests */,
@@ -130,8 +130,8 @@
 		4E35BA7A22C81A740067F276 /* InventoryUITests */ = {
 			isa = PBXGroup;
 			children = (
+				4E60F0F622DA67F500785A9F /* Inventory2UITestsCS3260.swift */,
 				4E35BA7B22C81A740067F276 /* InventoryUITests.swift */,
-				4E35BA8B22C81A9E0067F276 /* InventoryUITestsCS3260.swift */,
 				4E35BA7D22C81A740067F276 /* Info.plist */,
 			);
 			path = InventoryUITests;
@@ -242,7 +242,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E35BA6622C81A740067F276 /* LaunchScreen.storyboard in Resources */,
-				4E35BA8A22C81A920067F276 /* Jenkinsfile in Resources */,
+				4E60F0F522DA67D200785A9F /* Jenkinsfile in Resources */,
 				4E35BA6322C81A740067F276 /* Assets.xcassets in Resources */,
 				4E35BA6122C81A710067F276 /* Main.storyboard in Resources */,
 			);
@@ -288,8 +288,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E60F0F722DA67F500785A9F /* Inventory2UITestsCS3260.swift in Sources */,
 				4E35BA7C22C81A740067F276 /* InventoryUITests.swift in Sources */,
-				4E35BA8C22C81A9E0067F276 /* InventoryUITestsCS3260.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
