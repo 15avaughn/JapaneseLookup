@@ -8,6 +8,7 @@
 
 import UIKit
 import SQLite3
+import Firebase
 
 var itemBeingEdited: Int!
 var db: OpaquePointer?
