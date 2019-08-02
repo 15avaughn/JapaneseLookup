@@ -13,7 +13,7 @@ protocol MyEditProtocol {
     func setEditResult(valueSent: Item)
 }
 
-class EditViewController: UIViewController, UIScrollViewDelegate {
+class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDelegate {
 
     @IBOutlet weak var shortDescription: UITextField!
     @IBOutlet weak var longDescription: UITextView!
@@ -47,6 +47,12 @@ class EditViewController: UIViewController, UIScrollViewDelegate {
         shortDescription.layer.cornerRadius = 5
         longDescription.layer.cornerRadius = 5
         shortDescription.returnKeyType = .done
+        shortDescription.delegate = self
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
     }
     
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
@@ -149,10 +155,16 @@ class EditViewController: UIViewController, UIScrollViewDelegate {
     
     
     @objc func saveItem() {
-        let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue))
-        delegate?.setEditResult(valueSent: newItem)
-        self.navigationController?.popViewController(animated: true)
-        
+        if(!(shortDescription.text?.trimmingCharacters(in: .whitespaces).isEmpty)! && shortDescription.text != nil){
+            let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue))
+            delegate?.setEditResult(valueSent: newItem)
+            self.navigationController?.popViewController(animated: true)
+        }
+        else {
+            let alert = UIAlertController(title: "No Title", message: "You need a title for this picture.", preferredStyle: .actionSheet)
+            alert.addAction(UIAlertAction.init(title: "OK", style: .cancel, handler: nil))
+            self.present(alert, animated: true, completion: nil)
+        }
     }
     
 
