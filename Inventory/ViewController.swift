@@ -13,15 +13,16 @@ import Firebase
 var itemBeingEdited: Int!
 var db: OpaquePointer?
 let queryString = "SELECT * FROM Items"
-let insertString = "INSERT INTO Items (shortDescription, longDescription) VALUES (?,?)"
+let insertString = "INSERT INTO Items (shortDescription, longDescription, image) VALUES (?,?,?)"
 var stmt: OpaquePointer?
-
+var imagePicker = UIImagePickerController()
 let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
     .appendingPathComponent("Inventory.sqlite")
 
 struct Item {
     var shortDesc : String
     var longDesc : String
+    var image : String
 }
 
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, MyProtocol, MyEditProtocol {
@@ -41,7 +42,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     @IBOutlet weak var tableView: UITableView!
     
     var items: [Item] = []
-    
+    var takenImage: UIImage?
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         return items.count
@@ -81,7 +82,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             print("Error opening database.")
         }
         
-        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Items (id INTEGER PRIMARY KEY AUTOINCREMENT, shortDescription VARCHAR, longDescription VARCHAR)", nil, nil, nil) != SQLITE_OK{
+        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Items (id INTEGER PRIMARY KEY AUTOINCREMENT, shortDescription VARCHAR, longDescription VARCHAR, image VARCHAR)", nil, nil, nil) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("Error creating table: \(errmsg)")
         }
@@ -95,8 +96,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         while(sqlite3_step(stmt) == SQLITE_ROW){
             let shortDescription = String(cString: sqlite3_column_text(stmt, 1))
             let longDescription = String(cString: sqlite3_column_text(stmt, 2))
-            
-            items.append(Item(shortDesc: shortDescription, longDesc: longDescription))
+            let img = String(cString: sqlite3_column_text(stmt,3))
+            items.append(Item(shortDesc: shortDescription, longDesc: longDescription, image: img))
         }
     }
     
@@ -109,6 +110,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         if segue.identifier == "addSegue" {
             let view = segue.destination as! AddViewController
             view.delegate = self
+            view.takenImage = takenImage
         }
         else if segue.identifier == "editSegue" {
             let view = segue.destination as! EditViewController
@@ -116,9 +118,37 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             itemBeingEdited = tableView.indexPathForSelectedRow?.row
             view.shortDesc = items[itemBeingEdited].shortDesc
             view.longDesc = items[itemBeingEdited].longDesc
+            view.takenImage = items[itemBeingEdited].image.toImage()
         }
      }
- 
+    
+    
+    @IBAction func addNewImage(_ sender: Any) {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Take Photo", style: .default, handler: {_ in self.openCamera()}))
+        alert.addAction(UIAlertAction(title: "Choose Photo", style: .default, handler: {_ in self.openGallery()}))
+        alert.addAction(UIAlertAction.init(title: "Cancel", style: .cancel, handler: nil))
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    func openCamera(){
+        if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerController.SourceType.camera)){
+            imagePicker.sourceType = UIImagePickerController.SourceType.camera
+            imagePicker.allowsEditing = false
+            imagePicker.delegate = self
+            self.present(imagePicker, animated: true, completion: nil)
+        }
+    }
+    
+    func openGallery(){
+        if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerController.SourceType.photoLibrary)){
+            imagePicker.sourceType = UIImagePickerController.SourceType.photoLibrary
+            imagePicker.allowsEditing = false
+            imagePicker.delegate = self
+            self.present(imagePicker, animated: true, completion: nil)
+        }
+    }
+    
     @objc func saveToDatabase(_ notification:Notification){
         if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
             print("Error opening database.")
@@ -149,6 +179,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 return
             }
             
+            if sqlite3_bind_text(stmt, 3, (item.image as NSString).utf8String, -1, nil) != SQLITE_OK{
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                print("failure binding image: \(errmsg)")
+                return
+            }
+            
             //executing the query to insert values
             if sqlite3_step(stmt) != SQLITE_DONE {
                 let errmsg = String(cString: sqlite3_errmsg(db)!)
@@ -161,3 +197,30 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
 }
 
+extension ViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate{
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]){
+        self.takenImage = info[.originalImage] as? UIImage
+        picker.dismiss(animated: true, completion: nil)
+        performSegue(withIdentifier: "addSegue", sender: Any?.self)
+    }
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController){
+        picker.isNavigationBarHidden = false
+        self.dismiss(animated: true, completion: nil)
+    }
+}
+
+extension String {
+    func toImage() -> UIImage? {
+        if let data = Data(base64Encoded: self, options: .ignoreUnknownCharacters){
+            return UIImage(data: data)
+        }
+        return nil
+    }
+}
+
+extension UIImage {
+    func toString() -> String? {
+        let data: Data? = self.pngData()
+        return data?.base64EncodedString(options: .endLineWithLineFeed)
+    }
+}
