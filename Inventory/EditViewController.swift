@@ -13,16 +13,19 @@ protocol MyEditProtocol {
     func setEditResult(valueSent: Item)
 }
 
-class EditViewController: UIViewController {
+class EditViewController: UIViewController, UIScrollViewDelegate {
 
     @IBOutlet weak var shortDescription: UITextField!
     @IBOutlet weak var longDescription: UITextView!
     @IBOutlet weak var translationImageView: UIImageView!
+    @IBOutlet weak var recognizeButton: UIButton!
+    @IBOutlet weak var scrollView: UIScrollView!
     
     var delegate:MyEditProtocol?
     var shortDesc: String!
     var longDesc: String!
     var takenImage: UIImage!
+    var imageOrientation: Int!
     lazy var vision = Vision.vision()
     
     override func viewDidLoad() {
@@ -34,23 +37,119 @@ class EditViewController: UIViewController {
         self.navigationItem.rightBarButtonItem = save
         shortDescription.text = shortDesc
         longDescription.text = longDesc
-        translationImageView.image = takenImage
+        let fixedTakenImage = UIImage(cgImage: takenImage.cgImage!, scale: takenImage.scale, orientation: UIImage.Orientation(rawValue: imageOrientation!)!)
+        updateImageView(with: fixedTakenImage)
+        scrollView.minimumZoomScale = 1.0
+        scrollView.maximumZoomScale = 1.0
+        scrollView.delegate = self
+        recognizeButton.layer.cornerRadius = 5
+        scrollView.layer.cornerRadius = 5
+        shortDescription.layer.cornerRadius = 5
+        longDescription.layer.cornerRadius = 5
+        shortDescription.returnKeyType = .done
+    }
+    
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        return translationImageView
+    }
+    
+    private func updateImageView(with image: UIImage) {
+        let orientation = UIApplication.shared.statusBarOrientation
+        var scaledImageWidth: CGFloat = 0.0
+        var scaledImageHeight: CGFloat = 0.0
+        switch orientation {
+        case .portrait, .portraitUpsideDown, .unknown:
+            scaledImageWidth = translationImageView.bounds.size.width
+            scaledImageHeight = image.size.height * scaledImageWidth / image.size.width
+        case .landscapeLeft, .landscapeRight:
+            scaledImageWidth = image.size.width * scaledImageHeight / image.size.height
+            scaledImageHeight = translationImageView.bounds.size.height
+        @unknown default:
+            return
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Scale image while maintaining aspect ratio so it displays better in the UIImageView.
+            var scaledImage = image.scaledImage(
+                with: CGSize(width: scaledImageWidth, height: scaledImageHeight)
+            )
+            scaledImage = scaledImage ?? image
+            guard let finalImage = scaledImage else { return }
+            DispatchQueue.main.async {
+                self.translationImageView.image = finalImage
+            }
+        }
     }
     
     @IBAction func recognizeText(_ sender: Any) {
-        let visionImage = VisionImage(image: takenImage)
+        let visionImage = VisionImage(image: translationImageView.image!)
         let textRecognizer = vision.cloudTextRecognizer()
-        
+        for view in translationImageView.subviews{
+            view.removeFromSuperview()
+        }
         textRecognizer.process(visionImage) { result, error in
             guard error == nil, let result = result else {
                 return
             }
-            self.longDescription.text += result.text
+            self.longDescription.text = result.text
+            for block in result.blocks {
+                
+                // Lines.
+                for line in block.lines {
+                    
+                    // Elements.
+                    for element in line.elements {
+                        let transformedRect = element.frame.applying(self.transformMatrix())
+                        
+                        let button = UIButton(frame: transformedRect)
+                        button.setTitle(element.text, for: .normal)
+                        button.backgroundColor = UIColor.green
+                        button.alpha = 0.3
+                        button.titleLabel!.adjustsFontSizeToFitWidth = false
+                        button.setTitleColor(UIColor.clear, for: .normal)
+                        button.addTarget(self, action: #selector(self.lookUpWord), for: .touchUpInside)
+                        button.isUserInteractionEnabled = true
+                        self.translationImageView.addSubview(button)
+                    }
+                }
+            }
         }
+        scrollView.maximumZoomScale = 6.0
+        shortDescription.resignFirstResponder()
     }
     
+    @objc func lookUpWord(sender: UIButton) {
+        let dictionaryLookUp = UIReferenceLibraryViewController.init(term: sender.titleLabel?.text ?? "No Definition Found")
+        self.present(dictionaryLookUp, animated: true, completion: nil)
+    }
+    
+    private func transformMatrix() -> CGAffineTransform {
+        guard let image = translationImageView.image else { return CGAffineTransform() }
+        let imageViewWidth = translationImageView.frame.size.width
+        let imageViewHeight = translationImageView.frame.size.height
+        let imageWidth = image.size.width
+        let imageHeight = image.size.height
+        
+        let imageViewAspectRatio = imageViewWidth / imageViewHeight
+        let imageAspectRatio = imageWidth / imageHeight
+        let scale = (imageViewAspectRatio > imageAspectRatio) ?
+            imageViewHeight / imageHeight :
+            imageViewWidth / imageWidth
+        
+        // Image view's `contentMode` is `scaleAspectFit`, which scales the image to fit the size of the
+        // image view by maintaining the aspect ratio. Multiple by `scale` to get image's original size.
+        let scaledImageWidth = imageWidth * scale
+        let scaledImageHeight = imageHeight * scale
+        let xValue = (imageViewWidth - scaledImageWidth) / CGFloat(2.0)
+        let yValue = (imageViewHeight - scaledImageHeight) / CGFloat(2.0)
+        
+        var transform = CGAffineTransform.identity.translatedBy(x: xValue, y: yValue)
+        transform = transform.scaledBy(x: scale, y: scale)
+        return transform
+    }
+    
+    
     @objc func saveItem() {
-        let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!)
+        let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue))
         delegate?.setEditResult(valueSent: newItem)
         self.navigationController?.popViewController(animated: true)
         

@@ -13,7 +13,7 @@ import Firebase
 var itemBeingEdited: Int!
 var db: OpaquePointer?
 let queryString = "SELECT * FROM Items"
-let insertString = "INSERT INTO Items (shortDescription, longDescription, image) VALUES (?,?,?)"
+let insertString = "INSERT INTO Items (shortDescription, longDescription, image, imageOrientation) VALUES (?,?,?,?)"
 var stmt: OpaquePointer?
 var imagePicker = UIImagePickerController()
 let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
@@ -23,6 +23,7 @@ struct Item {
     var shortDesc : String
     var longDesc : String
     var image : String
+    var imageOrientation : String
 }
 
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, MyProtocol, MyEditProtocol {
@@ -71,7 +72,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        self.title = "Inventory"
+        self.title = "History"
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self,
                                        selector: #selector(saveToDatabase(_:)),
@@ -82,7 +83,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             print("Error opening database.")
         }
         
-        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Items (id INTEGER PRIMARY KEY AUTOINCREMENT, shortDescription VARCHAR, longDescription VARCHAR, image VARCHAR)", nil, nil, nil) != SQLITE_OK{
+        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Items (id INTEGER PRIMARY KEY AUTOINCREMENT, shortDescription VARCHAR, longDescription VARCHAR, image VARCHAR, imageOrientation VARCHAR)", nil, nil, nil) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("Error creating table: \(errmsg)")
         }
@@ -97,7 +98,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             let shortDescription = String(cString: sqlite3_column_text(stmt, 1))
             let longDescription = String(cString: sqlite3_column_text(stmt, 2))
             let img = String(cString: sqlite3_column_text(stmt,3))
-            items.append(Item(shortDesc: shortDescription, longDesc: longDescription, image: img))
+            let imgOrientation = String(cString: sqlite3_column_text(stmt,4))
+            items.append(Item(shortDesc: shortDescription, longDesc: longDescription, image: img, imageOrientation: imgOrientation))
         }
     }
     
@@ -119,6 +121,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             view.shortDesc = items[itemBeingEdited].shortDesc
             view.longDesc = items[itemBeingEdited].longDesc
             view.takenImage = items[itemBeingEdited].image.toImage()
+            view.imageOrientation = Int(items[itemBeingEdited].imageOrientation)
+            
         }
      }
     
@@ -136,6 +140,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             imagePicker.sourceType = UIImagePickerController.SourceType.camera
             imagePicker.allowsEditing = false
             imagePicker.delegate = self
+            imagePicker.modalPresentationStyle = .overCurrentContext
             self.present(imagePicker, animated: true, completion: nil)
         }
     }
@@ -145,6 +150,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             imagePicker.sourceType = UIImagePickerController.SourceType.photoLibrary
             imagePicker.allowsEditing = false
             imagePicker.delegate = self
+            imagePicker.modalPresentationStyle = .overCurrentContext
             self.present(imagePicker, animated: true, completion: nil)
         }
     }
@@ -182,6 +188,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             if sqlite3_bind_text(stmt, 3, (item.image as NSString).utf8String, -1, nil) != SQLITE_OK{
                 let errmsg = String(cString: sqlite3_errmsg(db)!)
                 print("failure binding image: \(errmsg)")
+                return
+            }
+            
+            if sqlite3_bind_text(stmt, 4, (item.imageOrientation as NSString).utf8String, -1, nil) != SQLITE_OK{
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                print("failure binding imageOrientation: \(errmsg)")
                 return
             }
             
