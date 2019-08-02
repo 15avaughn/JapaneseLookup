@@ -33,7 +33,8 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
         self.title = "Add New Item"
         let save = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveItem))
         self.navigationItem.rightBarButtonItem = save
-        updateImageView(with: takenImage)
+        //updateImageView(with: takenImage)
+        translationImageView.image = takenImage
         scrollView.minimumZoomScale = 1.0
         scrollView.maximumZoomScale = 1.0
         scrollView.delegate = self
@@ -52,33 +53,6 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
     
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return translationImageView
-    }
-    
-    private func updateImageView(with image: UIImage) {
-        let orientation = UIApplication.shared.statusBarOrientation
-        var scaledImageWidth: CGFloat = 0.0
-        var scaledImageHeight: CGFloat = 0.0
-        switch orientation {
-        case .portrait, .portraitUpsideDown, .unknown:
-            scaledImageWidth = translationImageView.bounds.size.width
-            scaledImageHeight = image.size.height * scaledImageWidth / image.size.width
-        case .landscapeLeft, .landscapeRight:
-            scaledImageWidth = image.size.width * scaledImageHeight / image.size.height
-            scaledImageHeight = translationImageView.bounds.size.height
-        @unknown default:
-            return
-        }
-        DispatchQueue.global(qos: .userInitiated).async {
-            // Scale image while maintaining aspect ratio so it displays better in the UIImageView.
-            var scaledImage = image.scaledImage(
-                with: CGSize(width: scaledImageWidth, height: scaledImageHeight)
-            )
-            scaledImage = scaledImage ?? image
-            guard let finalImage = scaledImage else { return }
-            DispatchQueue.main.async {
-                self.translationImageView.image = finalImage
-            }
-        }
     }
     
     @IBAction func recognizeText(_ sender: Any) {
@@ -171,37 +145,4 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
     }
     */
 
-}
-
-extension UIImage {
-    
-    /// Creates and returns a new image scaled to the given size. The image preserves its original PNG
-    /// or JPEG bitmap info.
-    ///
-    /// - Parameter size: The size to scale the image to.
-    /// - Returns: The scaled image or `nil` if image could not be resized.
-    public func scaledImage(with size: CGSize) -> UIImage? {
-        UIGraphicsBeginImageContextWithOptions(size, false, scale)
-        defer { UIGraphicsEndImageContext() }
-        draw(in: CGRect(origin: .zero, size: size))
-        return UIGraphicsGetImageFromCurrentImageContext()?.data.flatMap(UIImage.init)
-    }
-    
-    // MARK: - Private
-    
-    /// The PNG or JPEG data representation of the image or `nil` if the conversion failed.
-    private var data: Data? {
-        #if swift(>=4.2)
-        return self.pngData() ?? self.jpegData(compressionQuality: Constant.jpegCompressionQuality)
-        #else
-        return UIImagePNGRepresentation(self) ??
-            UIImageJPEGRepresentation(self, Constant.jpegCompressionQuality)
-        #endif  // swift(>=4.2)
-    }
-}
-
-// MARK: - Constants
-
-private enum Constant {
-    static let jpegCompressionQuality: CGFloat = 0.8
 }

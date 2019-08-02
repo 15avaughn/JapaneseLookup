@@ -38,7 +38,7 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
         shortDescription.text = shortDesc
         longDescription.text = longDesc
         let fixedTakenImage = UIImage(cgImage: takenImage.cgImage!, scale: takenImage.scale, orientation: UIImage.Orientation(rawValue: imageOrientation!)!)
-        updateImageView(with: fixedTakenImage)
+        translationImageView.image = fixedTakenImage
         scrollView.minimumZoomScale = 1.0
         scrollView.maximumZoomScale = 1.0
         scrollView.delegate = self
@@ -57,33 +57,6 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
     
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return translationImageView
-    }
-    
-    private func updateImageView(with image: UIImage) {
-        let orientation = UIApplication.shared.statusBarOrientation
-        var scaledImageWidth: CGFloat = 0.0
-        var scaledImageHeight: CGFloat = 0.0
-        switch orientation {
-        case .portrait, .portraitUpsideDown, .unknown:
-            scaledImageWidth = translationImageView.bounds.size.width
-            scaledImageHeight = image.size.height * scaledImageWidth / image.size.width
-        case .landscapeLeft, .landscapeRight:
-            scaledImageWidth = image.size.width * scaledImageHeight / image.size.height
-            scaledImageHeight = translationImageView.bounds.size.height
-        @unknown default:
-            return
-        }
-        DispatchQueue.global(qos: .userInitiated).async {
-            // Scale image while maintaining aspect ratio so it displays better in the UIImageView.
-            var scaledImage = image.scaledImage(
-                with: CGSize(width: scaledImageWidth, height: scaledImageHeight)
-            )
-            scaledImage = scaledImage ?? image
-            guard let finalImage = scaledImage else { return }
-            DispatchQueue.main.async {
-                self.translationImageView.image = finalImage
-            }
-        }
     }
     
     @IBAction func recognizeText(_ sender: Any) {
