@@ -57,12 +57,15 @@
                                 </connections>
                             </tableView>
                         </subviews>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="tintColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
                         <constraints>
                             <constraint firstAttribute="bottom" secondItem="vfy-Qi-342" secondAttribute="bottom" id="CHY-O2-AtU"/>
                             <constraint firstItem="vfy-Qi-342" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="LtE-0k-7qw"/>
-                            <constraint firstAttribute="trailing" secondItem="vfy-Qi-342" secondAttribute="trailing" id="YeG-Le-w6t"/>
                             <constraint firstItem="vfy-Qi-342" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="fx7-bj-0h1"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="vfy-Qi-342" secondAttribute="trailing" id="siJ-E5-gZs">
+                                <variation key="heightClass=compact" constant="0.0"/>
+                            </constraint>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
@@ -254,7 +257,7 @@
                                                     <constraint firstAttribute="height" constant="49" id="lyp-3T-sPV"/>
                                                 </constraints>
                                                 <fontDescription key="fontDescription" type="system" pointSize="25"/>
-                                                <state key="normal" title="Re-Recognize"/>
+                                                <state key="normal" title="Recognize"/>
                                                 <connections>
                                                     <action selector="recognizeText:" destination="5W0-z0-EoY" eventType="touchUpInside" id="ehl-c0-M88"/>
                                                 </connections>

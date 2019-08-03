@@ -60,6 +60,7 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
     }
     
     @IBAction func recognizeText(_ sender: Any) {
+        scrollView.setZoomScale(1.0, animated: true)
         let visionImage = VisionImage(image: translationImageView.image!)
         let textRecognizer = vision.cloudTextRecognizer()
         for view in translationImageView.subviews{

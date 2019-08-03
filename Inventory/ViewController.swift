@@ -206,12 +206,35 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
         sqlite3_close(db)
     }
-    
+    func updateImage(with image: UIImage) ->UIImage{
+        var scaledHeight:CGFloat = 920.0
+        var scaledWidth:CGFloat = 920.0
+        if(image.size.width > scaledWidth || image.size.height > scaledHeight){
+            if(image.size.width > image.size.height){
+                scaledHeight = scaledWidth/image.size.width * image.size.height
+                let scaledImage = image.scaledImage(with: CGSize(width: scaledWidth, height: scaledHeight))
+                return scaledImage!
+            }
+            else if(image.size.width == image.size.height){
+                let scaledImage = image.scaledImage(with: CGSize(width: scaledWidth, height: scaledHeight))
+                return scaledImage!
+            }
+            else{
+                scaledWidth = scaledHeight/image.size.height * image.size.width
+                let scaledImage = image.scaledImage(with: CGSize(width: scaledWidth, height: scaledHeight))
+                return scaledImage!
+            }
+        }
+        else{
+            return image
+        }
+    }
 }
 
 extension ViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate{
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]){
-        self.takenImage = info[.originalImage] as? UIImage
+        let image = info[.originalImage] as? UIImage
+        self.takenImage = updateImage(with: image!)
         picker.dismiss(animated: true, completion: nil)
         performSegue(withIdentifier: "addSegue", sender: Any?.self)
     }
@@ -235,4 +258,33 @@ extension UIImage {
         let data: Data? = self.pngData()
         return data?.base64EncodedString(options: .endLineWithLineFeed)
     }
+    
+    /// Creates and returns a new image scaled to the given size. The image preserves its original PNG
+    /// or JPEG bitmap info.
+    ///
+    /// - Parameter size: The size to scale the image to.
+    /// - Returns: The scaled image or `nil` if image could not be resized.
+    public func scaledImage(with size: CGSize) -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        draw(in: CGRect(origin: .zero, size: size))
+        return UIGraphicsGetImageFromCurrentImageContext()?.data.flatMap(UIImage.init)
+    }
+    
+    // MARK: - Private
+    
+    /// The PNG or JPEG data representation of the image or `nil` if the conversion failed.
+    private var data: Data? {
+        #if swift(>=4.2)
+        return self.pngData() ?? self.jpegData(compressionQuality: Constant.jpegCompressionQuality)
+        #else
+        return UIImagePNGRepresentation(self) ??
+            UIImageJPEGRepresentation(self, Constant.jpegCompressionQuality)
+        #endif  // swift(>=4.2)
+    }
+}
+
+// MARK: - Constants
+private enum Constant {
+    static let jpegCompressionQuality: CGFloat = 0.8
 }
