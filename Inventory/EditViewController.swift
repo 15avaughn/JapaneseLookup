@@ -14,18 +14,22 @@ protocol MyEditProtocol {
 }
 
 class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDelegate {
-
+    
+    //Outlets for storyboard elements
     @IBOutlet weak var shortDescription: UITextField!
     @IBOutlet weak var longDescription: UITextView!
     @IBOutlet weak var translationImageView: UIImageView!
     @IBOutlet weak var recognizeButton: UIButton!
     @IBOutlet weak var scrollView: UIScrollView!
     
+    //Delegate for passing data
     var delegate:MyEditProtocol?
+    //Objects received from ViewController
     var shortDesc: String!
     var longDesc: String!
     var takenImage: UIImage!
     var imageOrientation: Int!
+    //Vision object from Firebase for recognizing text
     lazy var vision = Vision.vision()
     
     override func viewDidLoad() {
@@ -37,40 +41,55 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
         self.navigationItem.rightBarButtonItem = save
         shortDescription.text = shortDesc
         longDescription.text = longDesc
+        //Fixes image because its orientation isn't saved when converted to a string
         let fixedTakenImage = UIImage(cgImage: takenImage.cgImage!, scale: takenImage.scale, orientation: UIImage.Orientation(rawValue: imageOrientation!)!)
         translationImageView.image = fixedTakenImage
+        //Prevents zooming before recognizing text
         scrollView.minimumZoomScale = 1.0
         scrollView.maximumZoomScale = 1.0
         scrollView.delegate = self
+        //Round corners
         recognizeButton.layer.cornerRadius = 5
         scrollView.layer.cornerRadius = 5
         shortDescription.layer.cornerRadius = 5
         longDescription.layer.cornerRadius = 5
+        //Make keyboard able to dismiss itself
         shortDescription.returnKeyType = .done
         shortDescription.delegate = self
     }
-    
+    //For keyboard dismissal
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
-    
+    //For image zooming
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return translationImageView
     }
-    
+    //Recognizes text after pressing "Recognize"
     @IBAction func recognizeText(_ sender: Any) {
+        
+        //Reset zoom
         scrollView.setZoomScale(1.0, animated: true)
+        
+        //Setup textRecognizer
         let visionImage = VisionImage(image: translationImageView.image!)
         let textRecognizer = vision.cloudTextRecognizer()
+        
+        //Remove all element buttons
         for view in translationImageView.subviews{
             view.removeFromSuperview()
         }
+        
         textRecognizer.process(visionImage) { result, error in
             guard error == nil, let result = result else {
                 return
             }
+            
+            //Sets longDescription to have all text that was recognized
             self.longDescription.text = result.text
+            
+            //Draws green transparent buttons over elements of text that were recognized
             for block in result.blocks {
                 
                 // Lines.
@@ -93,15 +112,19 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
                 }
             }
         }
+        //allow zooming
         scrollView.maximumZoomScale = 6.0
+        //dismiss keyboard
         shortDescription.resignFirstResponder()
     }
     
+    //Function for buttons to be used to look up a word
     @objc func lookUpWord(sender: UIButton) {
         let dictionaryLookUp = UIReferenceLibraryViewController.init(term: sender.titleLabel?.text ?? "No Definition Found")
         self.present(dictionaryLookUp, animated: true, completion: nil)
     }
     
+    //Function for scaling rectangles to size of view (By Google)
     private func transformMatrix() -> CGAffineTransform {
         guard let image = translationImageView.image else { return CGAffineTransform() }
         let imageViewWidth = translationImageView.frame.size.width
@@ -127,7 +150,7 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
         return transform
     }
     
-    
+    //Send item back to ViewController if shortDescription is not empty
     @objc func saveItem() {
         if(!(shortDescription.text?.trimmingCharacters(in: .whitespaces).isEmpty)! && shortDescription.text != nil){
             let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue))

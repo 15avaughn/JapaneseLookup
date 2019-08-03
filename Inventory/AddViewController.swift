@@ -15,17 +15,20 @@ protocol MyProtocol {
 
 class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDelegate {
     
-    
+    //Outlets for storyboard elements
     @IBOutlet weak var longDescription: UITextView!
     @IBOutlet weak var shortDescription: UITextField!
     @IBOutlet weak var translationImageView: UIImageView!
     @IBOutlet weak var scrollView: UIScrollView!
-    
     @IBOutlet weak var recognizeButton: UIButton!
     
+    //Image received from ViewController
     var takenImage: UIImage!
+    //Delegate for passing data
     var delegate:MyProtocol?
+    //Vision object from Firebase for recognizing text
     lazy var vision = Vision.vision()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -33,40 +36,53 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
         self.title = "Add New Item"
         let save = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveItem))
         self.navigationItem.rightBarButtonItem = save
-        //updateImageView(with: takenImage)
         translationImageView.image = takenImage
+        //Prevents zooming before recognizing text
         scrollView.minimumZoomScale = 1.0
         scrollView.maximumZoomScale = 1.0
         scrollView.delegate = self
+        //Round corners
         recognizeButton.layer.cornerRadius = 5
         scrollView.layer.cornerRadius = 5
         shortDescription.layer.cornerRadius = 5
         longDescription.layer.cornerRadius = 5
+        //Make keyboard able to dismiss itself
         shortDescription.returnKeyType = .done
         shortDescription.delegate = self
     }
-    
+    //For keyboard dismissal
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
-    
+    //For image zooming
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return translationImageView
     }
-    
+    //Recognizes text after pressing "Recognize"
     @IBAction func recognizeText(_ sender: Any) {
+        
+        //Reset zoom
         scrollView.setZoomScale(1.0, animated: true)
+        
+        //Setup textRecognizer
         let visionImage = VisionImage(image: translationImageView.image!)
         let textRecognizer = vision.cloudTextRecognizer()
+        
+        //Remove all element buttons
         for view in translationImageView.subviews{
             view.removeFromSuperview()
         }
+        
         textRecognizer.process(visionImage) { result, error in
             guard error == nil, let result = result else {
                 return
             }
+            
+            //Sets longDescription to have all text that was recognized
             self.longDescription.text = result.text
+            
+            //Draws green transparent buttons over elements of text that were recognized
             for block in result.blocks {
                 
                 // Lines.
@@ -90,15 +106,19 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
                 }
             }
         }
+        //dismiss keyboard
         shortDescription.resignFirstResponder()
+        //allow zooming
         scrollView.maximumZoomScale = 6.0
     }
     
+    //Function for buttons to be used to look up a word
     @objc func lookUpWord(sender: UIButton) {
         let dictionaryLookUp = UIReferenceLibraryViewController.init(term: sender.titleLabel?.text ?? "No Definition Found")
         self.present(dictionaryLookUp, animated: true, completion: nil)
     }
     
+    //Function for scaling rectangles to size of view (By Google)
     private func transformMatrix() -> CGAffineTransform {
         guard let image = translationImageView.image else { return CGAffineTransform() }
         let imageViewWidth = translationImageView.frame.size.width
@@ -124,6 +144,7 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
         return transform
     }
     
+    //Send item back to ViewController if shortDescription is not empty
     @objc func saveItem() {
         if(!(shortDescription.text?.trimmingCharacters(in: .whitespaces).isEmpty)! && shortDescription.text != nil){
             let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue))

@@ -10,15 +10,21 @@ import UIKit
 import SQLite3
 import Firebase
 
+//Item passed to EditViewController
 var itemBeingEdited: Int!
+
+//Variables for database interaction
 var db: OpaquePointer?
 let queryString = "SELECT * FROM Items"
 let insertString = "INSERT INTO Items (shortDescription, longDescription, image, imageOrientation) VALUES (?,?,?,?)"
 var stmt: OpaquePointer?
-var imagePicker = UIImagePickerController()
 let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
     .appendingPathComponent("Inventory.sqlite")
 
+//Image picker view for choosing a new image from library or camera
+var imagePicker = UIImagePickerController()
+
+//Consists of base64 representation of image, its orientation, its title, and its content that has been recognized
 struct Item {
     var shortDesc : String
     var longDesc : String
@@ -27,23 +33,27 @@ struct Item {
 }
 
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, MyProtocol, MyEditProtocol {
+
     
+    
+    @IBOutlet weak var tableView: UITableView!
+    //Array of items to be saved in database/displayed in list
+    var items: [Item] = []
+    //Variable for image that will be taken
+    var takenImage: UIImage?
+    
+    
+    //Deals with data sent back from Add and Edit Views
     func setEditResult(valueSent: Item) {
         items[itemBeingEdited] = valueSent
         self.tableView.reloadData()
     }
-    
-    
     func setAddResult(valueSent: Item) {
         items.append(valueSent)
         self.tableView.reloadData()
     }
     
-    
-    @IBOutlet weak var tableView: UITableView!
-    
-    var items: [Item] = []
-    var takenImage: UIImage?
+    //Setting up table view
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         return items.count
@@ -58,6 +68,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         return cell
     }
     
+    //Removing from table view
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") {
             (action:UIContextualAction, sourceView:UIView, actionPerformed:(Bool) -> Void) in
@@ -68,7 +79,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
-    
+    //Loading from database when the view loads
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
@@ -102,13 +113,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             items.append(Item(shortDesc: shortDescription, longDesc: longDescription, image: img, imageOrientation: imgOrientation))
         }
     }
-    
-     // MARK: - Navigation
-     
-     // In a storyboard-based application, you will often want to do a little preparation before navigation
+   
      override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-     // Get the new view controller using segue.destination.
-     // Pass the selected object to the new view controller.
+     // Get the new view controller using segue.identifier.
+     // Pass the selected object(s) to the new view controller.
         if segue.identifier == "addSegue" {
             let view = segue.destination as! AddViewController
             view.delegate = self
@@ -126,7 +134,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
      }
     
-    
+    //IBAction for + Button to add a new image.
     @IBAction func addNewImage(_ sender: Any) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "Take Photo", style: .default, handler: {_ in self.openCamera()}))
@@ -134,7 +142,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         alert.addAction(UIAlertAction.init(title: "Cancel", style: .cancel, handler: nil))
         self.present(alert, animated: true, completion: nil)
     }
-    
+    //Opens an image picker view to the Camera
     func openCamera(){
         if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerController.SourceType.camera)){
             imagePicker.sourceType = UIImagePickerController.SourceType.camera
@@ -144,7 +152,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             self.present(imagePicker, animated: true, completion: nil)
         }
     }
-    
+    //Opens an image picker view to the Gallery
     func openGallery(){
         if(UIImagePickerController .isSourceTypeAvailable(UIImagePickerController.SourceType.photoLibrary)){
             imagePicker.sourceType = UIImagePickerController.SourceType.photoLibrary
@@ -154,7 +162,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             self.present(imagePicker, animated: true, completion: nil)
         }
     }
-    
+    //Saves objects to database
     @objc func saveToDatabase(_ notification:Notification){
         if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
             print("Error opening database.")
@@ -206,6 +214,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
         sqlite3_close(db)
     }
+    //Changes taken image to have a maximum height or width of 920 because
+    //Google can't handle images bigger than that without breaking
     func updateImage(with image: UIImage) ->UIImage{
         var scaledHeight:CGFloat = 920.0
         var scaledWidth:CGFloat = 920.0
@@ -230,7 +240,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
     }
 }
-
+//Required methods for ImagePickerDelegate
+//Takes image from picker, sets it, and prepares a segue. Or just cancels everything.
 extension ViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate{
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]){
         let image = info[.originalImage] as? UIImage
@@ -243,7 +254,7 @@ extension ViewController : UIImagePickerControllerDelegate, UINavigationControll
         self.dismiss(animated: true, completion: nil)
     }
 }
-
+//Extension to String to convert a base64 image string to a UIImage
 extension String {
     func toImage() -> UIImage? {
         if let data = Data(base64Encoded: self, options: .ignoreUnknownCharacters){
@@ -252,18 +263,21 @@ extension String {
         return nil
     }
 }
-
+//Extensions to UIImage
 extension UIImage {
+    //Converts image to base64 string
     func toString() -> String? {
         let data: Data? = self.pngData()
         return data?.base64EncodedString(options: .endLineWithLineFeed)
     }
     
-    /// Creates and returns a new image scaled to the given size. The image preserves its original PNG
-    /// or JPEG bitmap info.
-    ///
-    /// - Parameter size: The size to scale the image to.
-    /// - Returns: The scaled image or `nil` if image could not be resized.
+    // The following extension method is by Google
+    
+    // Creates and returns a new image scaled to the given size. The image preserves its original PNG
+    // or JPEG bitmap info.
+    //
+    // - Parameter size: The size to scale the image to.
+    // - Returns: The scaled image or `nil` if image could not be resized.
     public func scaledImage(with size: CGSize) -> UIImage? {
         UIGraphicsBeginImageContextWithOptions(size, false, scale)
         defer { UIGraphicsEndImageContext() }
