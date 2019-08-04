@@ -29,6 +29,8 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
     //Vision object from Firebase for recognizing text
     lazy var vision = Vision.vision()
     
+    var elements: [Element] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -37,9 +39,9 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
         let save = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveItem))
         self.navigationItem.rightBarButtonItem = save
         translationImageView.image = takenImage
-        //Prevents zooming before recognizing text
+        //Zooming
         scrollView.minimumZoomScale = 1.0
-        scrollView.maximumZoomScale = 1.0
+        scrollView.maximumZoomScale = 6.0
         scrollView.delegate = self
         //Round corners
         recognizeButton.layer.cornerRadius = 5
@@ -49,6 +51,9 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
         //Make keyboard able to dismiss itself
         shortDescription.returnKeyType = .done
         shortDescription.delegate = self
+        
+        recognizeText(self)
+        
     }
     //For keyboard dismissal
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -61,10 +66,11 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
     }
     //Recognizes text after pressing "Recognize"
     @IBAction func recognizeText(_ sender: Any) {
-        
+        //Disable button
+        recognizeButton.isEnabled = false
         //Reset zoom
         scrollView.setZoomScale(1.0, animated: true)
-        
+        scrollView.maximumZoomScale = 1.0
         //Setup textRecognizer
         let visionImage = VisionImage(image: translationImageView.image!)
         let textRecognizer = vision.cloudTextRecognizer()
@@ -76,12 +82,13 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
         
         textRecognizer.process(visionImage) { result, error in
             guard error == nil, let result = result else {
+                self.longDescription.text = error?.localizedDescription
+                self.recognizeButton.isEnabled = true
                 return
             }
             
             //Sets longDescription to have all text that was recognized
             self.longDescription.text = result.text
-            
             //Draws green transparent buttons over elements of text that were recognized
             for block in result.blocks {
                 
@@ -90,8 +97,8 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
                     
                     // Elements.
                     for element in line.elements {
+                        self.elements.append(Element(frame: element.frame, text: element.text))
                         let transformedRect = element.frame.applying(self.transformMatrix())
-                        
                         let button = UIButton(frame: transformedRect)
                         button.setTitle(element.text, for: .normal)
                         button.backgroundColor = UIColor.green
@@ -101,7 +108,9 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
                         button.addTarget(self, action: #selector(self.lookUpWord), for: .touchUpInside)
                         button.isUserInteractionEnabled = true
                         self.translationImageView.addSubview(button)
-                        
+                        //Re-enable zoom and button
+                        self.recognizeButton.isEnabled = true
+                        self.scrollView.maximumZoomScale = 6.0
                     }
                 }
             }
@@ -109,7 +118,7 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
         //dismiss keyboard
         shortDescription.resignFirstResponder()
         //allow zooming
-        scrollView.maximumZoomScale = 6.0
+        
     }
     
     //Function for buttons to be used to look up a word
@@ -147,7 +156,9 @@ class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDele
     //Send item back to ViewController if shortDescription is not empty
     @objc func saveItem() {
         if(!(shortDescription.text?.trimmingCharacters(in: .whitespaces).isEmpty)! && shortDescription.text != nil){
-            let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue))
+            let data = try! JSONEncoder().encode(elements)
+            
+            let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue), jsonElements: String(data: data, encoding: .utf8) ?? "")
             delegate?.setAddResult(valueSent: newItem)
             self.navigationController?.popViewController(animated: true)
         }

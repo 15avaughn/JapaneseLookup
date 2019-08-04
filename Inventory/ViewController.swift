@@ -16,7 +16,7 @@ var itemBeingEdited: Int!
 //Variables for database interaction
 var db: OpaquePointer?
 let queryString = "SELECT * FROM Items"
-let insertString = "INSERT INTO Items (shortDescription, longDescription, image, imageOrientation) VALUES (?,?,?,?)"
+let insertString = "INSERT INTO Items (shortDescription, longDescription, image, imageOrientation, jsonElements) VALUES (?,?,?,?,?)"
 var stmt: OpaquePointer?
 let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
     .appendingPathComponent("Inventory.sqlite")
@@ -30,6 +30,13 @@ struct Item {
     var longDesc : String
     var image : String
     var imageOrientation : String
+    var jsonElements : String
+}
+
+//For JSON encoding individual buttons
+struct Element: Codable {
+    var frame : CGRect
+    var text : String
 }
 
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, MyProtocol, MyEditProtocol {
@@ -94,7 +101,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             print("Error opening database.")
         }
         
-        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Items (id INTEGER PRIMARY KEY AUTOINCREMENT, shortDescription VARCHAR, longDescription VARCHAR, image VARCHAR, imageOrientation VARCHAR)", nil, nil, nil) != SQLITE_OK{
+        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Items (id INTEGER PRIMARY KEY AUTOINCREMENT, shortDescription VARCHAR, longDescription VARCHAR, image VARCHAR, imageOrientation VARCHAR, jsonElements VARCHAR)", nil, nil, nil) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("Error creating table: \(errmsg)")
         }
@@ -110,7 +117,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             let longDescription = String(cString: sqlite3_column_text(stmt, 2))
             let img = String(cString: sqlite3_column_text(stmt,3))
             let imgOrientation = String(cString: sqlite3_column_text(stmt,4))
-            items.append(Item(shortDesc: shortDescription, longDesc: longDescription, image: img, imageOrientation: imgOrientation))
+            let jsonElements = String(cString: sqlite3_column_text(stmt,5))
+            items.append(Item(shortDesc: shortDescription, longDesc: longDescription, image: img, imageOrientation: imgOrientation,jsonElements: jsonElements))
         }
     }
    
@@ -130,7 +138,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             view.longDesc = items[itemBeingEdited].longDesc
             view.takenImage = items[itemBeingEdited].image.toImage()
             view.imageOrientation = Int(items[itemBeingEdited].imageOrientation)
-            
+            view.elementsJSON = items[itemBeingEdited].jsonElements
         }
      }
     
@@ -200,6 +208,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             }
             
             if sqlite3_bind_text(stmt, 4, (item.imageOrientation as NSString).utf8String, -1, nil) != SQLITE_OK{
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                print("failure binding imageOrientation: \(errmsg)")
+                return
+            }
+            
+            if sqlite3_bind_text(stmt, 5, (item.jsonElements as NSString).utf8String, -1, nil) != SQLITE_OK{
                 let errmsg = String(cString: sqlite3_errmsg(db)!)
                 print("failure binding imageOrientation: \(errmsg)")
                 return

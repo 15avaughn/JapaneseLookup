@@ -129,7 +129,7 @@
                                                     <constraint firstAttribute="height" constant="49" id="WDx-7f-af6"/>
                                                 </constraints>
                                                 <fontDescription key="fontDescription" type="system" pointSize="25"/>
-                                                <state key="normal" title="Recognize"/>
+                                                <state key="normal" title="Re-Recognize"/>
                                                 <connections>
                                                     <action selector="recognizeText:" destination="SB5-et-KzB" eventType="touchUpInside" id="2rm-uw-142"/>
                                                 </connections>
@@ -257,7 +257,7 @@
                                                     <constraint firstAttribute="height" constant="49" id="lyp-3T-sPV"/>
                                                 </constraints>
                                                 <fontDescription key="fontDescription" type="system" pointSize="25"/>
-                                                <state key="normal" title="Recognize"/>
+                                                <state key="normal" title="Re-Recognize"/>
                                                 <connections>
                                                     <action selector="recognizeText:" destination="5W0-z0-EoY" eventType="touchUpInside" id="ehl-c0-M88"/>
                                                 </connections>

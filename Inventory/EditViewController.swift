@@ -29,6 +29,8 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
     var longDesc: String!
     var takenImage: UIImage!
     var imageOrientation: Int!
+    var elementsJSON: String!
+    var updatedElements: [Element] = []
     //Vision object from Firebase for recognizing text
     lazy var vision = Vision.vision()
     
@@ -44,9 +46,9 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
         //Fixes image because its orientation isn't saved when converted to a string
         let fixedTakenImage = UIImage(cgImage: takenImage.cgImage!, scale: takenImage.scale, orientation: UIImage.Orientation(rawValue: imageOrientation!)!)
         translationImageView.image = fixedTakenImage
-        //Prevents zooming before recognizing text
+        //Zooming
         scrollView.minimumZoomScale = 1.0
-        scrollView.maximumZoomScale = 1.0
+        scrollView.maximumZoomScale = 6.0
         scrollView.delegate = self
         //Round corners
         recognizeButton.layer.cornerRadius = 5
@@ -56,6 +58,24 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
         //Make keyboard able to dismiss itself
         shortDescription.returnKeyType = .done
         shortDescription.delegate = self
+        
+        //Get saved words from encoded JSON
+        let elements = try! JSONDecoder().decode([Element].self, from: elementsJSON.data(using: .utf8)!)
+        //Draw buttons for words
+        for element in elements {
+            let transformedRect = element.frame.applying(self.transformMatrix())
+            
+            let button = UIButton(frame: transformedRect)
+            button.setTitle(element.text, for: .normal)
+            button.backgroundColor = UIColor.green
+            button.alpha = 0.3
+            button.titleLabel!.adjustsFontSizeToFitWidth = false
+            button.setTitleColor(UIColor.clear, for: .normal)
+            button.addTarget(self, action: #selector(self.lookUpWord), for: .touchUpInside)
+            button.isUserInteractionEnabled = true
+            self.translationImageView.addSubview(button)
+        }
+        
     }
     //For keyboard dismissal
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -68,10 +88,11 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
     }
     //Recognizes text after pressing "Recognize"
     @IBAction func recognizeText(_ sender: Any) {
-        
+        //disable button
+        recognizeButton.isEnabled = false
         //Reset zoom
         scrollView.setZoomScale(1.0, animated: true)
-        
+        scrollView.maximumZoomScale = 1.0
         //Setup textRecognizer
         let visionImage = VisionImage(image: translationImageView.image!)
         let textRecognizer = vision.cloudTextRecognizer()
@@ -81,8 +102,11 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
             view.removeFromSuperview()
         }
         
+        
         textRecognizer.process(visionImage) { result, error in
             guard error == nil, let result = result else {
+                self.longDescription.text = error?.localizedDescription
+                self.recognizeButton.isEnabled = true
                 return
             }
             
@@ -98,7 +122,7 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
                     // Elements.
                     for element in line.elements {
                         let transformedRect = element.frame.applying(self.transformMatrix())
-                        
+                        self.updatedElements.append(Element(frame: element.frame, text: element.text))
                         let button = UIButton(frame: transformedRect)
                         button.setTitle(element.text, for: .normal)
                         button.backgroundColor = UIColor.green
@@ -111,9 +135,15 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
                     }
                 }
             }
+            //encode recognized text
+            let data = try! JSONEncoder().encode(self.updatedElements)
+            self.elementsJSON = String(data: data, encoding: .utf8)
+            //re-enable zoom and button
+            self.recognizeButton.isEnabled = true
+            self.scrollView.maximumZoomScale = 6.0
         }
         //allow zooming
-        scrollView.maximumZoomScale = 6.0
+        
         //dismiss keyboard
         shortDescription.resignFirstResponder()
     }
@@ -153,7 +183,7 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
     //Send item back to ViewController if shortDescription is not empty
     @objc func saveItem() {
         if(!(shortDescription.text?.trimmingCharacters(in: .whitespaces).isEmpty)! && shortDescription.text != nil){
-            let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue))
+            let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue), jsonElements: elementsJSON)
             delegate?.setEditResult(valueSent: newItem)
             self.navigationController?.popViewController(animated: true)
         }
