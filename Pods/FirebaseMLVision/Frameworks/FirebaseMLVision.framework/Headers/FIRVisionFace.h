@@ -8,6 +8,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /** A human face detected in an image. */
 NS_SWIFT_NAME(VisionFace)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionFace : NSObject
 
 /**

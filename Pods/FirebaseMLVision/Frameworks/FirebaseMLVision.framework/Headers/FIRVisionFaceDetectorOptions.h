@@ -12,7 +12,10 @@ typedef NS_ENUM(NSUInteger, FIRVisionFaceDetectorClassificationMode) {
   FIRVisionFaceDetectorClassificationModeNone = 1,
   /** Face classification mode indicating that the detector performs all classifications. */
   FIRVisionFaceDetectorClassificationModeAll,
-} NS_SWIFT_NAME(VisionFaceDetectorClassificationMode);
+} NS_SWIFT_NAME(VisionFaceDetectorClassificationMode)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * @enum VisionFaceDetectorPerformanceMode
@@ -29,7 +32,10 @@ typedef NS_ENUM(NSUInteger, FIRVisionFaceDetectorPerformanceMode) {
    * results with higher accuracy.
    */
   FIRVisionFaceDetectorPerformanceModeAccurate,
-} NS_SWIFT_NAME(VisionFaceDetectorPerformanceMode);
+} NS_SWIFT_NAME(VisionFaceDetectorPerformanceMode)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * @enum VisionFaceDetectorLandmarkMode
@@ -40,7 +46,10 @@ typedef NS_ENUM(NSUInteger, FIRVisionFaceDetectorLandmarkMode) {
   FIRVisionFaceDetectorLandmarkModeNone = 1,
   /** Face landmark mode indicating that the detector performs landmark detection. */
   FIRVisionFaceDetectorLandmarkModeAll,
-} NS_SWIFT_NAME(VisionFaceDetectorLandmarkMode);
+} NS_SWIFT_NAME(VisionFaceDetectorLandmarkMode)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * @enum VisionFaceDetectorContourMode
@@ -51,10 +60,16 @@ typedef NS_ENUM(NSUInteger, FIRVisionFaceDetectorContourMode) {
   FIRVisionFaceDetectorContourModeNone = 1,
   /** Face contour mode indicating that the detector performs contour detection. */
   FIRVisionFaceDetectorContourModeAll,
-} NS_SWIFT_NAME(VisionFaceDetectorContourMode);
+} NS_SWIFT_NAME(VisionFaceDetectorContourMode)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /** Options for specifying a face detector. */
 NS_SWIFT_NAME(VisionFaceDetectorOptions)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionFaceDetectorOptions : NSObject
 
 /**

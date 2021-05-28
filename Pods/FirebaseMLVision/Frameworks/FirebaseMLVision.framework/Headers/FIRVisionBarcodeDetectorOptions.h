@@ -37,10 +37,16 @@ typedef NS_OPTIONS(NSInteger, FIRVisionBarcodeFormat) {
   FIRVisionBarcodeFormatPDF417 = 0x0800,
   /** Aztec code detection. */
   FIRVisionBarcodeFormatAztec = 0x1000,
-} NS_SWIFT_NAME(VisionBarcodeFormat);
+} NS_SWIFT_NAME(VisionBarcodeFormat)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /** Options for specifying a Barcode detector. */
 NS_SWIFT_NAME(VisionBarcodeDetectorOptions)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeDetectorOptions : NSObject
 
 /**

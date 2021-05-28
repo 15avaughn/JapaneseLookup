@@ -5,7 +5,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /** Facial contour types. */
-typedef NSString *FIRFaceContourType NS_EXTENSIBLE_STRING_ENUM NS_SWIFT_NAME(FaceContourType);
+typedef NSString *FIRFaceContourType NS_EXTENSIBLE_STRING_ENUM NS_SWIFT_NAME(FaceContourType)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /** All contour points including left and right cheeks. */
 extern FIRFaceContourType const FIRFaceContourTypeAll;
@@ -51,6 +54,9 @@ extern FIRFaceContourType const FIRFaceContourTypeNoseBottom;
 
 /** A contour on a human face detected in an image. */
 NS_SWIFT_NAME(VisionFaceContour)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionFaceContour : NSObject
 
 /** The facial contour type. */
