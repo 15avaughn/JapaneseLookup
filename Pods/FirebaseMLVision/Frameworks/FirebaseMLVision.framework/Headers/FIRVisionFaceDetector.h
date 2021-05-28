@@ -13,15 +13,10 @@ NS_ASSUME_NONNULL_BEGIN
  */
 typedef void (^FIRVisionFaceDetectionCallback)(NSArray<FIRVisionFace *> *_Nullable faces,
                                                NSError *_Nullable error)
-    NS_SWIFT_NAME(VisionFaceDetectionCallback) DEPRECATED_MSG_ATTRIBUTE(
-        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
-        "guide at https://developers.google.com/ml-kit/migration");
+    NS_SWIFT_NAME(VisionFaceDetectionCallback);
 
 /** A face detector that detects faces in an image. */
 NS_SWIFT_NAME(VisionFaceDetector)
-DEPRECATED_MSG_ATTRIBUTE(
-    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
-    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionFaceDetector : NSObject
 
 /** Unavailable. Use `Vision` factory methods. */

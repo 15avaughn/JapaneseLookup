@@ -20,8 +20,6 @@
 #include <objc/runtime.h>
 
 #import "GTLRQuery.h"
-
-#import "GTLRDefines.h"
 #import "GTLRRuntimeCommon.h"
 #import "GTLRService.h"
 #import "GTLRUtilities.h"
@@ -210,7 +208,7 @@
 
   @synchronized([GTLRQuery class]) {
     ++lastRequestID;
-    result = [NSString stringWithFormat:@"gtlr_%lu", (unsigned long)lastRequestID];
+    result = [NSString stringWithFormat:@"gtlr_%tu", lastRequestID];
   }
   return result;
 }

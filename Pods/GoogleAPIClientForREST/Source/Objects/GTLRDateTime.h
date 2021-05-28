@@ -14,6 +14,7 @@
 */
 
 #import <Foundation/Foundation.h>
+#import "GTLRDefines.h"
 
 NS_ASSUME_NONNULL_BEGIN
 

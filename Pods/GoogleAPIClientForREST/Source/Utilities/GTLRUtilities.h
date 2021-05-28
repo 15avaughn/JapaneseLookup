@@ -15,6 +15,10 @@
 
 #import <Foundation/Foundation.h>
 
+#ifndef SKIP_GTLR_DEFINES
+  #import "GTLRDefines.h"
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
 // Helper functions for implementing isEqual:

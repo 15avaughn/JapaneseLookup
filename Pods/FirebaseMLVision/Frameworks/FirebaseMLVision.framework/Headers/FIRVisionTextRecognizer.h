@@ -21,9 +21,7 @@ typedef void (^FIRVisionTextRecognitionCallback)(FIRVisionText *_Nullable text,
  */
 typedef NS_ENUM(NSInteger, FIRVisionTextRecognizerType) {
   /** On-Device recognizer type. */
-  FIRVisionTextRecognizerTypeOnDevice DEPRECATED_MSG_ATTRIBUTE(
-      "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
-      "guide at https://developers.google.com/ml-kit/migration"),
+  FIRVisionTextRecognizerTypeOnDevice,
   /** Cloud recognizer type. */
   FIRVisionTextRecognizerTypeCloud,
 } NS_SWIFT_NAME(VisionTextRecognizerType);

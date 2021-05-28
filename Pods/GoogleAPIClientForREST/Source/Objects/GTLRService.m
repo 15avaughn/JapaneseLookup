@@ -31,25 +31,13 @@
   #endif
 #endif
 
-#if !defined(GTLR_USE_MODULE_IMPORTS)
-  #if defined(SWIFT_PACKAGE) && SWIFT_PACKAGE
-    #define GTLR_USE_MODULE_IMPORTS 1
-  #else
-    #define GTLR_USE_MODULE_IMPORTS 0
-  #endif
-#endif
-
 #import "GTLRService.h"
 
-#import "GTLRDefines.h"
 #import "GTLRFramework.h"
 #import "GTLRURITemplate.h"
 #import "GTLRUtilities.h"
 
-#if GTLR_USE_MODULE_IMPORTS
-  @import GTMSessionFetcherCore;
-  @import GTMSessionFetcherFull;
-#elif GTLR_USE_FRAMEWORK_IMPORTS
+#if GTLR_USE_FRAMEWORK_IMPORTS
   #import <GTMSessionFetcher/GTMSessionFetcher.h>
   #import <GTMSessionFetcher/GTMSessionFetcherService.h>
   #import <GTMSessionFetcher/GTMMIMEDocument.h>
@@ -63,18 +51,6 @@
 #ifndef STRIP_GTM_FETCH_LOGGING
   #error GTMSessionFetcher headers should have defaulted this if it wasn't already defined.
 #endif
-
-#ifndef GTLR_ASSERT_CURRENT_QUEUE_DEBUG
-  #define GTLR_ASSERT_CURRENT_QUEUE_DEBUG(targetQueue)                  \
-      GTLR_DEBUG_ASSERT(0 == strcmp(GTLR_QUEUE_NAME(targetQueue),       \
-                        GTLR_QUEUE_NAME(DISPATCH_CURRENT_QUEUE_LABEL)), \
-          @"Current queue is %s (expected %s)",                         \
-          GTLR_QUEUE_NAME(DISPATCH_CURRENT_QUEUE_LABEL),                \
-          GTLR_QUEUE_NAME(targetQueue))
-
-  #define GTLR_QUEUE_NAME(queue) \
-      (strlen(dispatch_queue_get_label(queue)) > 0 ? dispatch_queue_get_label(queue) : "unnamed")
-#endif  // GTLR_ASSERT_CURRENT_QUEUE_DEBUG
 
 NSString *const kGTLRServiceErrorDomain = @"com.google.GTLRServiceDomain";
 NSString *const kGTLRErrorObjectDomain = @"com.google.GTLRErrorObjectDomain";
@@ -202,7 +178,6 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
 //
 // We locally declare some methods of the upload fetcher so we
 // do not need to import the header, as some projects may not have it available
-#if !SWIFT_PACKAGE
 @interface GTMSessionUploadFetcher : GTMSessionFetcher
 
 + (instancetype)uploadFetcherWithRequest:(NSURLRequest *)request
@@ -224,7 +199,6 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
 - (void)resumeFetching;
 - (BOOL)isPaused;
 @end
-#endif  // !SWIFT_PACKAGE
 #endif  // GTLR_HAS_SESSION_UPLOAD_FETCHER_IMPORT
 
 
@@ -718,8 +692,7 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
   if (loggingName.length > 0) {
     NSUInteger pageNumber = ticket.pagesFetchedCounter + 1;
     if (pageNumber > 1) {
-      loggingName = [loggingName stringByAppendingFormat:@", page %lu",
-                     (unsigned long)pageNumber];
+      loggingName = [loggingName stringByAppendingFormat:@", page %tu", pageNumber];
     }
     fetcher.comment = loggingName;
   }
@@ -1055,12 +1028,11 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
     NSUInteger pageNumber = ticket.pagesFetchedCounter;
     NSString *pageStr = @"";
     if (pageNumber > 0) {
-      pageStr = [NSString stringWithFormat:@"page %lu, ",
-                 (unsigned long)(pageNumber + 1)];
+      pageStr = [NSString stringWithFormat:@"page %tu, ", pageNumber + 1];
     }
-    batchCopy.loggingName = [NSString stringWithFormat:@"batch: %@ (%@%lu queries)",
+    batchCopy.loggingName = [NSString stringWithFormat:@"batch: %@ (%@%tu queries)",
                              [loggingNames.allObjects componentsJoinedByString:@", "],
-                             pageStr, (unsigned long)numberOfQueries];
+                             pageStr, numberOfQueries];
   }
 #endif
 
@@ -1399,9 +1371,8 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
           } else {
             queryLabel = [[executingQuery class] description];
           }
-          GTLR_DEBUG_LOG(@"Executing %@ query required fetching %lu pages; use a query with"
-                         @" a larger maxResults for faster results",
-                         queryLabel, (unsigned long)pageCount);
+          GTLR_DEBUG_LOG(@"Executing %@ query required fetching %tu pages; use a query with"
+                         @" a larger maxResults for faster results", queryLabel, pageCount);
         }
   #endif
       }  // nextPageQuery
@@ -1566,64 +1537,57 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
                     targetBytes:"\r\n"
                    targetLength:2
                    foundOffsets:&offsets];
-    NSData *statusLine;
-    NSData *actualInnerHeaderData;
-    if (offsets.count) {
-      NSRange statusRange = NSMakeRange(0, offsets[0].unsignedIntegerValue);
-      statusLine = [innerHeaderData subdataWithRange:statusRange];
+    if (offsets.count < 2) {
+      // Lack of status line and inner headers is strange, but not fatal since
+      // if the JSON was delivered.
+      GTLR_DEBUG_LOG(@"GTLRService: Batch result cannot parse headers for request %@:\n%@",
+                     responseContentID,
+                     [[NSString alloc] initWithData:innerHeaderData
+                                           encoding:NSUTF8StringEncoding]);
+    } else {
+      NSString *statusString;
+      NSInteger statusCode;
+      [self getResponseLineFromData:innerHeaderData
+                         statusCode:&statusCode
+                       statusString:&statusString];
+      responsePart.statusCode = statusCode;
+      responsePart.statusString = statusString;
 
       NSUInteger actualInnerHeaderOffset = offsets[0].unsignedIntegerValue + 2;
+      NSData *actualInnerHeaderData;
       if (innerHeaderData.length - actualInnerHeaderOffset > 0) {
         NSRange actualInnerHeaderRange =
             NSMakeRange(actualInnerHeaderOffset,
                         innerHeaderData.length - actualInnerHeaderOffset);
         actualInnerHeaderData = [innerHeaderData subdataWithRange:actualInnerHeaderRange];
       }
-    } else {
-      // There appears to only be a status line.
-      //
-      // This means there were no reponse headers. "Date" seems like it should
-      // be required, but https://tools.ietf.org/html/rfc7231#section-7.1.1.2
-      // lets even that be left off if a server doesn't have a clock it knows
-      // to be correct.
-      statusLine = innerHeaderData;
+      responsePart.headers = [GTMMIMEDocument headersWithData:actualInnerHeaderData];
     }
 
-    NSString *statusString;
-    NSInteger statusCode;
-    [self getResponseLineFromData:statusLine
-                       statusCode:&statusCode
-                     statusString:&statusString];
-    responsePart.statusCode = statusCode;
-    responsePart.statusString = statusString;
-    responsePart.headers = [GTMMIMEDocument headersWithData:actualInnerHeaderData];
-
     // Create JSON from the body.
-    // (if there is any, methods like delete return nothing)
+    NSError *parseError = nil;
     NSMutableDictionary *json;
     if (partBodyData) {
-      NSError *parseError = nil;
       json = [NSJSONSerialization JSONObjectWithData:partBodyData
                                              options:NSJSONReadingMutableContainers
                                                error:&parseError];
-      if (!json) {
-        if (!parseError) {
-          // There should be an error, but just incase...
-          parseError = [NSError errorWithDomain:kGTLRServiceErrorDomain
-                                           code:GTLRServiceErrorBatchResponseUnexpected
-                                       userInfo:nil];
-        }
-        // Add our content ID and part body data to the parse error.
-        NSMutableDictionary *userInfo =
-            [NSMutableDictionary dictionaryWithDictionary:parseError.userInfo];
-        [userInfo setValue:mimePartBody forKey:kGTLRServiceErrorBodyDataKey];
-        [userInfo setValue:responseContentID forKey:kGTLRServiceErrorContentIDKey];
-        responsePart.parseError = [NSError errorWithDomain:parseError.domain
-                                                      code:parseError.code
-                                                  userInfo:userInfo];
-      }
+    } else {
+      parseError = [NSError errorWithDomain:kGTLRServiceErrorDomain
+                                       code:GTLRServiceErrorBatchResponseUnexpected
+                                   userInfo:nil];
     }
     responsePart.JSON = json;
+
+    if (!json) {
+      // Add our content ID and part body data to the parse error.
+      NSMutableDictionary *userInfo =
+          [NSMutableDictionary dictionaryWithDictionary:parseError.userInfo];
+      [userInfo setValue:mimePartBody forKey:kGTLRServiceErrorBodyDataKey];
+      [userInfo setValue:responseContentID forKey:kGTLRServiceErrorContentIDKey];
+      responsePart.parseError = [NSError errorWithDomain:parseError.domain
+                                                    code:parseError.code
+                                                userInfo:userInfo];
+    }
   }
   return responsePart;
 }
@@ -1649,11 +1613,6 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
       && [scanner scanInteger:outStatusCode]
       && [scanner scanUpToCharactersFromSet:newlineSet intoString:outStatusString]) {
     // Got it all.
-    #if DEBUG
-      if (![httpVersion hasPrefix:@"HTTP/"]) {
-        GTLR_DEBUG_LOG(@"GTLRService: Non-standard HTTP Version: %@", httpVersion);
-      }
-    #endif
   }
 }
 
@@ -2709,8 +2668,7 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
 - (void)startBackgroundTask {
 #if GTM_BACKGROUND_TASK_FETCHING
   GTLR_DEBUG_ASSERT(self.backgroundTaskIdentifier == UIBackgroundTaskInvalid,
-                    @"Redundant GTLRService background task: %lu",
-                    (unsigned long)self.backgroundTaskIdentifier);
+                    @"Redundant GTLRService background task: %tu", self.backgroundTaskIdentifier);
 
   NSString *taskName = [[self.executingQuery class] description];
 
@@ -2718,34 +2676,24 @@ static NSDictionary *MergeDictionaries(NSDictionary *recessiveDict, NSDictionary
 
   // We'll use a locally-scoped task ID variable so the expiration block is guaranteed
   // to refer to this task rather than to whatever task the property has.
-  // Since a request can be started from any thread, we also have to ensure the
-  // variable for accessing it is safe across the initial thread and the handler
-  // (incase it gets failed immediately from the app already heading into the
-  // background).
-  __block UIBackgroundTaskIdentifier guardedTaskID = UIBackgroundTaskInvalid;
-  UIBackgroundTaskIdentifier returnedTaskID =
+  __block UIBackgroundTaskIdentifier bgTaskID =
       [app beginBackgroundTaskWithName:taskName
                      expirationHandler:^{
         // Background task expiration callback. This block is always invoked by
         // UIApplication on the main thread.
-        UIBackgroundTaskIdentifier localTaskID;
-        @synchronized(self) {
-          localTaskID = guardedTaskID;
-        }
-        if (localTaskID != UIBackgroundTaskInvalid) {
+        if (bgTaskID != UIBackgroundTaskInvalid) {
           @synchronized(self) {
-            if (localTaskID == self.backgroundTaskIdentifier) {
+            if (bgTaskID == self.backgroundTaskIdentifier) {
               self.backgroundTaskIdentifier = UIBackgroundTaskInvalid;
             }
           }
-          // This explicitly ends the captured localTaskID rather than the backgroundTaskIdentifier
+          // This explicitly ends the captured bgTaskID rather than the backgroundTaskIdentifier
           // property to ensure expiration is handled even if the property has changed.
-          [app endBackgroundTask:localTaskID];
+          [app endBackgroundTask:bgTaskID];
         }
   }];
   @synchronized(self) {
-    guardedTaskID = returnedTaskID;
-    self.backgroundTaskIdentifier = returnedTaskID;
+    self.backgroundTaskIdentifier = bgTaskID;
   }
 #endif  // GTM_BACKGROUND_TASK_FETCHING
 }

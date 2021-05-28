@@ -15,6 +15,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "GTLRDefines.h"
+
 @protocol GTLRObjectClassResolver;
 
 NS_ASSUME_NONNULL_BEGIN

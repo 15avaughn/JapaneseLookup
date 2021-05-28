@@ -18,11 +18,6 @@
 #endif
 
 #import "GTMSessionFetcher.h"
-#if TARGET_OS_OSX && GTMSESSION_RECONNECT_BACKGROUND_SESSIONS_ON_LAUNCH
-// To reconnect background sessions on Mac outside +load requires importing and linking
-// AppKit to access the NSApplicationDidFinishLaunching symbol.
-#import <AppKit/AppKit.h>
-#endif
 
 #import <sys/utsname.h>
 
@@ -52,7 +47,6 @@ NSString *const kGTMSessionFetcherElapsedIntervalWithRetriesKey = @"kGTMSessionF
 static NSString *const kGTMSessionIdentifierPrefix = @"com.google.GTMSessionFetcher";
 static NSString *const kGTMSessionIdentifierDestinationFileURLMetadataKey = @"_destURL";
 static NSString *const kGTMSessionIdentifierBodyFileURLMetadataKey        = @"_bodyURL";
-static NSString *const kGTMSessionIdentifierClientReconnectMetadataKey    = @"_clientWillReconnect";
 
 // The default max retry interview is 10 minutes for uploads (POST/PUT/PATCH),
 // 1 minute for downloads.
@@ -91,34 +85,6 @@ GTM_ASSUME_NONNULL_END
        || (TARGET_OS_IPHONE && defined(__IPHONE_9_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_9_0))
     #define GTM_TARGET_SUPPORTS_APP_TRANSPORT_SECURITY 1
   #endif
-#endif
-
-#if ((defined(TARGET_OS_MACCATALYST) && TARGET_OS_MACCATALYST) || \
-     (TARGET_OS_OSX && defined(__MAC_10_15) && __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_15) || \
-     (TARGET_OS_IOS && defined(__IPHONE_13_0) && __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_13_0) || \
-     (TARGET_OS_WATCH && defined(__WATCHOS_6_0) && __WATCHOS_VERSION_MIN_REQUIRED >= __WATCHOS_6_0) || \
-     (TARGET_OS_TV && defined(__TVOS_13_0) && __TVOS_VERSION_MIN_REQUIRED >= __TVOS_13_0))
-#define GTM_SDK_REQUIRES_TLSMINIMUMSUPPORTEDPROTOCOLVERSION 1
-#define GTM_SDK_SUPPORTS_TLSMINIMUMSUPPORTEDPROTOCOLVERSION 1
-#elif ((TARGET_OS_OSX && defined(__MAC_10_15) && __MAC_OS_X_VERSION_MAX_ALLOWED >= __MAC_10_15) || \
-       (TARGET_OS_IOS && defined(__IPHONE_13_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_13_0) || \
-       (TARGET_OS_WATCH && defined(__WATCHOS_6_0) && __WATCHOS_VERSION_MAX_ALLOWED >= __WATCHOS_6_0) || \
-       (TARGET_OS_TV && defined(__TVOS_13_0) && __TVOS_VERSION_MAX_ALLOWED >= __TVOS_13_0))
-#define GTM_SDK_REQUIRES_TLSMINIMUMSUPPORTEDPROTOCOLVERSION 0
-#define GTM_SDK_SUPPORTS_TLSMINIMUMSUPPORTEDPROTOCOLVERSION 1
-#else
-#define GTM_SDK_REQUIRES_TLSMINIMUMSUPPORTEDPROTOCOLVERSION 0
-#define GTM_SDK_SUPPORTS_TLSMINIMUMSUPPORTEDPROTOCOLVERSION 0
-#endif
-
-#if ((defined(TARGET_OS_MACCATALYST) && TARGET_OS_MACCATALYST) || \
-     (TARGET_OS_OSX && defined(__MAC_10_15) && __MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_15) || \
-     (TARGET_OS_IOS && defined(__IPHONE_13_0) && __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_13_0) || \
-     (TARGET_OS_WATCH && defined(__WATCHOS_6_0) && __WATCHOS_VERSION_MIN_REQUIRED >= __WATCHOS_6_0) || \
-     (TARGET_OS_TV && defined(__TVOS_13_0) && __TVOS_VERSION_MIN_REQUIRED >= __TVOS_13_0))
-#define GTM_SDK_REQUIRES_SECTRUSTEVALUATEWITHERROR 1
-#else
-#define GTM_SDK_REQUIRES_SECTRUSTEVALUATEWITHERROR 0
 #endif
 
 @interface GTMSessionFetcher ()
@@ -192,7 +158,6 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
   NSURLResponse *_response;
   NSString *_sessionIdentifier;
   BOOL _wasCreatedFromBackgroundSession;
-  BOOL _clientWillReconnectBackgroundSession;
   BOOL _didCreateSessionIdentifier;
   NSString *_sessionIdentifierUUID;
   BOOL _userRequestedBackgroundSession;
@@ -247,32 +212,9 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
 
 #if !GTMSESSION_UNIT_TESTING
 + (void)load {
-#if GTMSESSION_RECONNECT_BACKGROUND_SESSIONS_ON_LAUNCH && TARGET_OS_IPHONE
-  NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-  [nc addObserver:self
-         selector:@selector(reconnectFetchersForBackgroundSessionsOnAppLaunch:)
-             name:UIApplicationDidFinishLaunchingNotification
-           object:nil];
-#elif GTMSESSION_RECONNECT_BACKGROUND_SESSIONS_ON_LAUNCH && TARGET_OS_OSX
-  NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-  [nc addObserver:self
-         selector:@selector(reconnectFetchersForBackgroundSessionsOnAppLaunch:)
-             name:NSApplicationDidFinishLaunchingNotification
-           object:nil];
-#else
   [self fetchersForBackgroundSessions];
+}
 #endif
-}
-
-+ (void)reconnectFetchersForBackgroundSessionsOnAppLaunch:(NSNotification *)notification {
-  // Give all other app-did-launch handlers a chance to complete before
-  // reconnecting the fetchers. Not doing this may lead to reconnecting
-  // before the app delegate has a chance to run.
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [self fetchersForBackgroundSessions];
-  });
-}
-#endif  // !GTMSESSION_UNIT_TESTING
 
 + (instancetype)fetcherWithRequest:(GTM_NULLABLE NSURLRequest *)request {
   return [[self alloc] initWithRequest:request configuration:nil];
@@ -553,11 +495,8 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
                            fetchRequest);
     }
 #endif
-    // If priorSessionIdentifier is allowed to stay non-nil, a background session can
-    // still be created.
-    priorSessionIdentifier = nil;
     [self setSessionIdentifierInternal:nil];
-    self.usingBackgroundSession = NO;
+    self.useBackgroundSession = NO;
   }
 
 #if GTM_ALLOW_INSECURE_REQUESTS
@@ -575,7 +514,7 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
     //
     // file: and data: schemes are usually safe if they are hardcoded in the client or provided
     // by a trusted source, but since it's fairly rare to need them, it's safest to make clients
-    // explicitly allow them.
+    // explicitly whitelist them.
     BOOL isSecure =
         requestScheme != nil && [requestScheme caseInsensitiveCompare:@"https"] == NSOrderedSame;
     if (!isSecure) {
@@ -624,7 +563,7 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
 
   BOOL isRecreatingSession = (self.sessionIdentifier != nil) && (fetchRequest == nil);
 
-  self.canShareSession = (_service != nil) && !isRecreatingSession && !self.usingBackgroundSession;
+  self.canShareSession = !isRecreatingSession && !self.usingBackgroundSession;
 
   if (!self.session && self.canShareSession) {
     self.session = [_service sessionForFetcherCreation];
@@ -644,36 +583,43 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
         NSMapTable *sessionIdentifierToFetcherMap = [[self class] sessionIdentifierToFetcherMap];
         [sessionIdentifierToFetcherMap setObject:self forKey:self.sessionIdentifier];
 
-        if (@available(iOS 8.0, tvOS 9.0, watchOS 2.0, macOS 10.10, *)) {
+#if (TARGET_OS_TV \
+     || TARGET_OS_WATCH \
+     || (!TARGET_OS_IPHONE && defined(MAC_OS_X_VERSION_10_10) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_10) \
+     || (TARGET_OS_IPHONE && defined(__IPHONE_8_0) && __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0))
+        // iOS 8/10.10 builds require the new backgroundSessionConfiguration method name.
+        _configuration =
+            [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:sessionIdentifier];
+#elif (!TARGET_OS_IPHONE && defined(MAC_OS_X_VERSION_10_10) && MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_10) \
+    || (TARGET_OS_IPHONE && defined(__IPHONE_8_0) && __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_8_0)
+        // Do a runtime check to avoid a deprecation warning about using
+        // +backgroundSessionConfiguration: on iOS 8.
+        if ([NSURLSessionConfiguration respondsToSelector:@selector(backgroundSessionConfigurationWithIdentifier:)]) {
+          // Running on iOS 8+/OS X 10.10+.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability"
+// Disable unguarded availability warning as we can't use the @availability macro until we require
+// all clients to build with Xcode 9 or above.
           _configuration =
               [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:sessionIdentifier];
+#pragma clang diagnostic pop
         } else {
-#if ((!TARGET_OS_IPHONE && MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_10) \
-     || (TARGET_OS_IPHONE && __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_8_0))
-          // If building with support for iOS 7 or < macOS 10.10, allow using the older
-          // -backgroundSessionConfiguration: method, otherwise leave it out to avoid deprecated
-          // API warnings/errors.
+          // Running on iOS 7/OS X 10.9.
           _configuration =
               [NSURLSessionConfiguration backgroundSessionConfiguration:sessionIdentifier];
-#endif
         }
+#else
+        // Building with an SDK earlier than iOS 8/OS X 10.10.
+        _configuration =
+            [NSURLSessionConfiguration backgroundSessionConfiguration:sessionIdentifier];
+#endif
         self.usingBackgroundSession = YES;
         self.canShareSession = NO;
       } else {
         _configuration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
       }
 #if !GTM_ALLOW_INSECURE_REQUESTS
-#if GTM_SDK_REQUIRES_TLSMINIMUMSUPPORTEDPROTOCOLVERSION
-      _configuration.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12;
-#elif GTM_SDK_SUPPORTS_TLSMINIMUMSUPPORTEDPROTOCOLVERSION
-      if (@available(iOS 13, tvOS 13, watchOS 6, macOS 10.15, *)) {
-        _configuration.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12;
-      } else {
-        _configuration.TLSMinimumSupportedProtocol = kTLSProtocol12;
-      }
-#else
       _configuration.TLSMinimumSupportedProtocol = kTLSProtocol12;
-#endif  // GTM_SDK_REQUIRES_TLSMINIMUMSUPPORTEDPROTOCOLVERSION
 #endif
     }  // !_configuration
     _configuration.HTTPCookieStorage = self.cookieStorage;
@@ -872,8 +818,21 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
     newSessionTask.taskDescription = _taskDescription;
   }
   if (_taskPriority >= 0) {
-    if (@available(iOS 8.0, macOS 10.10, *)) {
+#if TARGET_OS_TV || TARGET_OS_WATCH
+    BOOL hasTaskPriority = YES;
+#elif (!TARGET_OS_IPHONE && defined(MAC_OS_X_VERSION_10_10) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_10) \
+    || (TARGET_OS_IPHONE && defined(__IPHONE_8_0) && __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0)
+    BOOL hasTaskPriority = YES;
+#else
+    BOOL hasTaskPriority = [newSessionTask respondsToSelector:@selector(setPriority:)];
+#endif
+    if (hasTaskPriority) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunguarded-availability"
+// Disable unguarded availability warning as we can't use the @availability macro until we require
+// all clients to build with Xcode 9 or above.
       newSessionTask.priority = _taskPriority;
+#pragma clang diagnostic pop
     }
   }
 
@@ -896,7 +855,7 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
 #if GTM_BACKGROUND_TASK_FETCHING
   id<GTMUIApplicationProtocol> app = [[self class] fetcherUIApplication];
   // Background tasks seem to interfere with out-of-process uploads and downloads.
-  if (app && !self.skipBackgroundTask && !self.usingBackgroundSession) {
+  if (app && !self.skipBackgroundTask && !self.useBackgroundSession) {
     // Tell UIApplication that we want to continue even when the app is in the
     // background.
 #if DEBUG
@@ -905,31 +864,21 @@ static GTMSessionFetcherTestBlock GTM_NULLABLE_TYPE gGlobalTestBlock;
 #else
     NSString *bgTaskName = @"GTMSessionFetcher";
 #endif
-    // Since a request can be started from any thread, we also have to ensure the
-    // variable for accessing it is safe across the initial thread and the handler
-    // (incase it gets failed immediately from the app already heading into the
-    // background).
-    __block UIBackgroundTaskIdentifier guardedTaskID = UIBackgroundTaskInvalid;
-    UIBackgroundTaskIdentifier returnedTaskID =
-        [app beginBackgroundTaskWithName:bgTaskName expirationHandler:^{
+    __block UIBackgroundTaskIdentifier bgTaskID = [app beginBackgroundTaskWithName:bgTaskName
+                                                                 expirationHandler:^{
       // Background task expiration callback - this block is always invoked by
       // UIApplication on the main thread.
-      UIBackgroundTaskIdentifier localTaskID;
-      @synchronized(self) {
-        localTaskID = guardedTaskID;
-      }
-      if (localTaskID != UIBackgroundTaskInvalid) {
+      if (bgTaskID != UIBackgroundTaskInvalid) {
         @synchronized(self) {
-          if (localTaskID == self.backgroundTaskIdentifier) {
+          if (bgTaskID == self.backgroundTaskIdentifier) {
             self.backgroundTaskIdentifier = UIBackgroundTaskInvalid;
           }
         }
-        [app endBackgroundTask:localTaskID];
+        [app endBackgroundTask:bgTaskID];
       }
     }];
     @synchronized(self) {
-      guardedTaskID = returnedTaskID;
-      self.backgroundTaskIdentifier = returnedTaskID;
+      self.backgroundTaskIdentifier = bgTaskID;
     }
   }
 #endif
@@ -1097,7 +1046,6 @@ NSData * GTM_NULLABLE_TYPE GTMDataFromInputStream(NSInputStream *inputStream, NS
     GTMSessionFetcherReceivedProgressBlock receivedProgressBlock = _receivedProgressBlock;
     GTMSessionFetcherWillCacheURLResponseBlock willCacheURLResponseBlock =
         _willCacheURLResponseBlock;
-    GTMSessionFetcherChallengeBlock challengeBlock = _challengeBlock;
 
     // Simulate receipt of redirection.
     if (willRedirectBlock) {
@@ -1115,32 +1063,34 @@ NSData * GTM_NULLABLE_TYPE GTMDataFromInputStream(NSInputStream *inputStream, NS
     // It might be nice to eventually let the user determine which testBlock
     // fetches get challenged rather than always executing the supplied
     // challenge block.
-    if (challengeBlock) {
+    if (_challengeBlock) {
       [self invokeOnCallbackUnsynchronizedQueueAfterUserStopped:YES
                                                           block:^{
-        NSURL *requestURL = self->_request.URL;
-        NSString *host = requestURL.host;
-        NSURLProtectionSpace *pspace =
-            [[NSURLProtectionSpace alloc] initWithHost:host
-                                                  port:requestURL.port.integerValue
-                                              protocol:requestURL.scheme
-                                                 realm:nil
-                                  authenticationMethod:NSURLAuthenticationMethodHTTPBasic];
-        id<NSURLAuthenticationChallengeSender> unusedSender =
-            (id<NSURLAuthenticationChallengeSender>)[NSNull null];
-        NSURLAuthenticationChallenge *challenge =
-            [[NSURLAuthenticationChallenge alloc] initWithProtectionSpace:pspace
-                                                       proposedCredential:nil
-                                                     previousFailureCount:0
-                                                          failureResponse:nil
-                                                                    error:nil
-                                                                   sender:unusedSender];
-        challengeBlock(self, challenge, ^(NSURLSessionAuthChallengeDisposition disposition,
-                                          NSURLCredential * GTM_NULLABLE_TYPE credential){
-          // We could change the responseData and responseError based on the disposition,
-          // but it's easier for apps to just supply the expected data and error
-          // directly to the test block. So this simulation ignores the disposition.
-        });
+        if (self->_challengeBlock) {
+          NSURL *requestURL = self->_request.URL;
+          NSString *host = requestURL.host;
+          NSURLProtectionSpace *pspace =
+              [[NSURLProtectionSpace alloc] initWithHost:host
+                                                    port:requestURL.port.integerValue
+                                                protocol:requestURL.scheme
+                                                   realm:nil
+                                    authenticationMethod:NSURLAuthenticationMethodHTTPBasic];
+          id<NSURLAuthenticationChallengeSender> unusedSender =
+              (id<NSURLAuthenticationChallengeSender>)[NSNull null];
+          NSURLAuthenticationChallenge *challenge =
+              [[NSURLAuthenticationChallenge alloc] initWithProtectionSpace:pspace
+                                                         proposedCredential:nil
+                                                       previousFailureCount:0
+                                                            failureResponse:nil
+                                                                      error:nil
+                                                                     sender:unusedSender];
+          self->_challengeBlock(self, challenge, ^(NSURLSessionAuthChallengeDisposition disposition,
+                                             NSURLCredential * GTM_NULLABLE_TYPE credential){
+            // We could change the responseData and responseError based on the disposition,
+            // but it's easier for apps to just supply the expected data and error
+            // directly to the test block. So this simulation ignores the disposition.
+          });
+        }
       }];
     }
 
@@ -1389,9 +1339,7 @@ NSData * GTM_NULLABLE_TYPE GTMDataFromInputStream(NSInputStream *inputStream, NS
       fetcher = [self fetcherWithSessionIdentifier:sessionIdentifier];
       GTMSESSION_ASSERT_DEBUG(fetcher != nil,
                               @"Unexpected invalid session identifier: %@", sessionIdentifier);
-      if (!fetcher.clientWillReconnectBackgroundSession) {
-        [fetcher beginFetchWithCompletionHandler:nil];
-      }
+      [fetcher beginFetchWithCompletionHandler:nil];
     }
     GTM_LOG_BACKGROUND_SESSION(@"%@ restoring session %@ by creating fetcher %@ %p",
                                [self class], sessionIdentifier, fetcher, fetcher);
@@ -1488,9 +1436,6 @@ NSData * GTM_NULLABLE_TYPE GTMDataFromInputStream(NSInputStream *inputStream, NS
   if (_bodyFileURL) {
     defaultUserInfo[kGTMSessionIdentifierBodyFileURLMetadataKey] = [_bodyFileURL absoluteString];
   }
-  if (_clientWillReconnectBackgroundSession) {
-    defaultUserInfo[kGTMSessionIdentifierClientReconnectMetadataKey] = @"YES";
-  }
   return (defaultUserInfo.count > 0) ? defaultUserInfo : nil;
 }
 
@@ -1507,12 +1452,6 @@ NSData * GTM_NULLABLE_TYPE GTMDataFromInputStream(NSInputStream *inputStream, NS
   if (bodyFileURLString) {
     _bodyFileURL = [NSURL URLWithString:bodyFileURLString];
     GTM_LOG_BACKGROUND_SESSION(@"Restoring body file URL: %@", _bodyFileURL);
-  }
-  NSString *clientReconnectString = metadata[kGTMSessionIdentifierClientReconnectMetadataKey];
-  if (clientReconnectString) {
-    _clientWillReconnectBackgroundSession = [clientReconnectString boolValue];
-    GTM_LOG_BACKGROUND_SESSION(@"Restoring clientWillReconnectBackgroundSession: %@",
-                               (_clientWillReconnectBackgroundSession ? @"YES" : @"NO"));
   }
 }
 
@@ -1807,9 +1746,6 @@ NSData * GTM_NULLABLE_TYPE GTMDataFromInputStream(NSInputStream *inputStream, NS
   self.retryBlock = nil;
   self.testBlock = nil;
   self.resumeDataBlock = nil;
-  if (@available(iOS 10.0, macOS 10.12, tvOS 10.0, watchOS 3.0, *)) {
-    self.metricsCollectionBlock = nil;
-  }
 }
 
 - (void)forgetSessionIdentifierForFetcher {
@@ -2389,24 +2325,8 @@ didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
     // It looks like the implementation of SecTrustEvaluate() on Mac grabs a global lock,
     // so it may be redundant for us to also lock, but it's easy to synchronize here
     // anyway.
-    BOOL shouldAllow;
-#if GTM_SDK_REQUIRES_SECTRUSTEVALUATEWITHERROR
-    CFErrorRef errorRef = NULL;
-    @synchronized ([GTMSessionFetcher class]) {
-      GTMSessionMonitorSynchronized([GTMSessionFetcher class]);
-
-      // SecTrustEvaluateWithError handles both the "proceed" and "unspecified" cases,
-      // so it is not necessary to check the trust result the evaluation returns true.
-      shouldAllow = SecTrustEvaluateWithError(serverTrust, &errorRef);
-    }
-
-    if (errorRef) {
-      GTMSESSION_LOG_DEBUG(@"Error %d evaluating trust for %@",
-                           (int)CFErrorGetCode(errorRef), request);
-      CFRelease(errorRef);
-    }
-#else
     SecTrustResultType trustEval = kSecTrustResultInvalid;
+    BOOL shouldAllow;
     OSStatus trustError;
     @synchronized([GTMSessionFetcher class]) {
       GTMSessionMonitorSynchronized([GTMSessionFetcher class]);
@@ -2430,7 +2350,6 @@ didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
                              CFBridgingRelease(SecTrustCopyProperties(serverTrust)));
       }
     }
-#endif  // GTM_SDK_REQUIRES_SECTRUSTEVALUATEWITHERROR
     handler(serverTrust, shouldAllow);
 
     CFRelease(serverTrust);
@@ -2706,14 +2625,20 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
       // but totalBytesWritten > totalBytesExpectedToWrite, so setting to unkown in these cases.
       totalBytesExpectedToWrite = NSURLSessionTransferSizeUnknown;
     }
+    // We won't hold on to download progress block during the enqueue;
+    // it's ok to not send it if the upload finishes.
 
-    GTMSessionFetcherDownloadProgressBlock progressBlock;
-    progressBlock = self->_downloadProgressBlock;
-    if (progressBlock) {
-      [self invokeOnCallbackQueueUnlessStopped:^{
+    [self invokeOnCallbackQueueUnlessStopped:^{
+      GTMSessionFetcherDownloadProgressBlock progressBlock;
+      @synchronized(self) {
+        GTMSessionMonitorSynchronized(self);
+
+        progressBlock = self->_downloadProgressBlock;
+      }
+      if (progressBlock) {
         progressBlock(bytesWritten, totalBytesWritten, totalBytesExpectedToWrite);
-      }];
-    }
+      }
+    }];
   }  // @synchronized(self)
 }
 
@@ -2866,21 +2791,6 @@ didCompleteWithError:(NSError *)error {
                        response:^(BOOL shouldRetry) {
     [self finishWithError:error shouldRetry:shouldRetry];
   }];
-}
-
-- (void)URLSession:(NSURLSession *)session
-                          task:(NSURLSessionTask *)task
-    didFinishCollectingMetrics:(NSURLSessionTaskMetrics *)metrics
-    API_AVAILABLE(ios(10.0), macosx(10.12), tvos(10.0), watchos(3.0)) {
-  @synchronized(self) {
-    GTMSessionMonitorSynchronized(self);
-    GTMSessionFetcherMetricsCollectionBlock metricsCollectionBlock = _metricsCollectionBlock;
-    if (metricsCollectionBlock) {
-      [self invokeOnCallbackQueueUnlessStopped:^{
-        metricsCollectionBlock(metrics);
-      }];
-    }
-  }
 }
 
 #if TARGET_OS_IPHONE
@@ -3230,14 +3140,6 @@ didCompleteWithError:(NSError *)error {
   }
 
   [self destroyRetryTimer];
-  
-#if GTM_BACKGROUND_TASK_FETCHING
-  // Don't keep a background task active while awaiting retry, which can lead to the
-  // app exceeding the allotted time for keeping the background task open, causing the
-  // system to terminate the app. When the retry starts, a new background task will
-  // be created.
-  [self endBackgroundTask];
-#endif  // GTM_BACKGROUND_TASK_FETCHING
 
   @synchronized(self) {
     GTMSessionMonitorSynchronized(self);
@@ -3470,7 +3372,6 @@ static NSMutableDictionary *gSystemCompletionHandlers = nil;
             configurationBlock = _configurationBlock,
             sessionTask = _sessionTask,
             wasCreatedFromBackgroundSession = _wasCreatedFromBackgroundSession,
-            clientWillReconnectBackgroundSession = _clientWillReconnectBackgroundSession,
             sessionUserInfo = _sessionUserInfo,
             taskDescription = _taskDescription,
             taskPriority = _taskPriority,
@@ -3493,7 +3394,6 @@ static NSMutableDictionary *gSystemCompletionHandlers = nil;
             sendProgressBlock = _sendProgressBlock,
             willCacheURLResponseBlock = _willCacheURLResponseBlock,
             retryBlock = _retryBlock,
-            metricsCollectionBlock = _metricsCollectionBlock,
             retryFactor = _retryFactor,
             allowedInsecureSchemes = _allowedInsecureSchemes,
             allowLocalhostRequest = _allowLocalhostRequest,
@@ -4669,7 +4569,7 @@ NSString *GTMFetcherApplicationIdentifier(NSBundle * GTM_NULLABLE_TYPE bundle) {
   }
 }
 
-+ (NSArray * GTM_NULLABLE_TYPE)functionsHoldingSynchronizationOnObject:(id)object {
++ (NSArray *)functionsHoldingSynchronizationOnObject:(id)object {
   Class threadKey = [GTMSessionSyncMonitorInternal class];
   NSValue *localObjectKey = [NSValue valueWithNonretainedObject:object];
 

@@ -15,6 +15,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "GTLRDefines.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 // Returns the version of the framework.  Major and minor should

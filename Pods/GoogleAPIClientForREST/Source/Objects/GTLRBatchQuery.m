@@ -19,7 +19,6 @@
 
 #import "GTLRBatchQuery.h"
 
-#import "GTLRDefines.h"
 #import "GTLRService.h"
 
 #if DEBUG
@@ -95,8 +94,8 @@ static void DebugAssertValidBatchQueryItem(GTLRQuery *query) { }
   [dedupedNames removeObject:[NSNull null]];  // In case any didn't have a loggingName.
   NSString *namesStr = [[dedupedNames allObjects] componentsJoinedByString:@","];
 
-  return [NSString stringWithFormat:@"%@ %p (queries:%lu - %@)",
-          [self class], self, (unsigned long)queries.count, namesStr];
+  return [NSString stringWithFormat:@"%@ %p (queries:%tu - %@)",
+          [self class], self, queries.count, namesStr];
 }
 
 #pragma mark -

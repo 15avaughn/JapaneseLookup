@@ -18,6 +18,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "GTLRDefines.h"
 #import "GTLRDateTime.h"
 #import "GTLRDuration.h"
 
@@ -304,8 +305,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSArray *)itemsWithItemClass:(Class)itemClass;
 @end
 
-// ----------------------------------------------------------------------------
-
 /**
  *  Helper to call the resolver and find the class to use for the given JSON.
  *  Intended for internal library use only.
@@ -314,14 +313,5 @@ Class GTLRObjectResolveClass(
     id<GTLRObjectClassResolver> objectClassResolver,
     NSDictionary *json,
     Class defaultClass);
-
-// ----------------------------------------------------------------------------
-
-// Version marker used to validate the generated sources against the library
-// version. The will be changed any time the library makes a change that means
-// sources need to be regenerated.
-#define GTLR_RUNTIME_VERSION 3000
-
-// ----------------------------------------------------------------------------
 
 NS_ASSUME_NONNULL_END

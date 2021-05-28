@@ -18,6 +18,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "GTLRDefines.h"
 #import "GTLRBatchQuery.h"
 #import "GTLRBatchResult.h"
 #import "GTLRDateTime.h"
@@ -35,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  *  The domain used used for NSErrors created by GTLRService query execution.
  */
-FOUNDATION_EXTERN NSString *const kGTLRServiceErrorDomain;
+extern NSString *const kGTLRServiceErrorDomain;
 
 typedef NS_ENUM(NSInteger, GTLRServiceError) {
   GTLRServiceErrorQueryResultMissing      = -3000,
@@ -46,24 +47,24 @@ typedef NS_ENUM(NSInteger, GTLRServiceError) {
 /**
  *  The kGTLRServiceErrorDomain userInfo key for the server response body.
  */
-FOUNDATION_EXTERN NSString *const kGTLRServiceErrorBodyDataKey;
+extern NSString *const kGTLRServiceErrorBodyDataKey;
 
 /**
  *  The kGTLRServiceErrorDomain userInfo key for the response content ID, if appropriate.
  */
-FOUNDATION_EXTERN NSString *const kGTLRServiceErrorContentIDKey;
+extern NSString *const kGTLRServiceErrorContentIDKey;
 
 /**
  *  The domain used for foundation errors created from GTLRErrorObjects that
  *  were not originally foundation errors.
  */
-FOUNDATION_EXTERN NSString *const kGTLRErrorObjectDomain;
+extern NSString *const kGTLRErrorObjectDomain;
 
 /**
  *  The userInfo key for a GTLRErrorObject for errors with domain kGTLRErrorObjectDomain
  *  when the error was created from a structured JSON error response body.
  */
-FOUNDATION_EXTERN NSString *const kGTLRStructuredErrorKey;
+extern NSString *const kGTLRStructuredErrorKey;
 
 /**
  *  A constant ETag for when updating or deleting a single entry, telling
@@ -71,7 +72,7 @@ FOUNDATION_EXTERN NSString *const kGTLRStructuredErrorKey;
  *
  *  Do not use this in entries in a batch feed.
  */
-FOUNDATION_EXTERN NSString *const kGTLRETagWildcard;
+extern NSString *const kGTLRETagWildcard;
 
 /**
  *  Notification of a ticket starting.  The notification object is the ticket.
@@ -79,32 +80,32 @@ FOUNDATION_EXTERN NSString *const kGTLRETagWildcard;
  *
  *  Use the stopped notification to log all requests made by the library.
  */
-FOUNDATION_EXTERN NSString *const kGTLRServiceTicketStartedNotification;
+extern NSString *const kGTLRServiceTicketStartedNotification;
 
 /**
  *  Notification of a ticket stopping.  The notification object is the ticket.
  *  This is posted on the main thread.
  */
-FOUNDATION_EXTERN NSString *const kGTLRServiceTicketStoppedNotification;
+extern NSString *const kGTLRServiceTicketStoppedNotification;
 
 /**
  *  Notifications when parsing of a server response or entry begins.
  *  This is posted on the main thread.
  */
-FOUNDATION_EXTERN NSString *const kGTLRServiceTicketParsingStartedNotification;
+extern NSString *const kGTLRServiceTicketParsingStartedNotification;
 
 /**
  *  Notifications when parsing of a server response or entry ends.
  *  This is posted on the main thread.
  */
-FOUNDATION_EXTERN NSString *const kGTLRServiceTicketParsingStoppedNotification;
+extern NSString *const kGTLRServiceTicketParsingStoppedNotification;
 
 /**
  *  The header name used to send an Application's Bundle Identifier.
  *  For more information on adding API restrictions see the docs:
  *    https://cloud.google.com/docs/authentication/api-keys#api_key_restrictions
  */
-FOUNDATION_EXTERN NSString *const kXIosBundleIdHeader;
+extern NSString *const kXIosBundleIdHeader;
 
 @class GTLRServiceTicket;
 

@@ -75,11 +75,9 @@ static NSString *const kGTLRBatchResultResponseHeaders = @"responseHeaders";
 }
 
 - (NSString *)description {
-  return [NSString stringWithFormat:@"%@ %p (successes:%lu failures:%lu responseHeaders:%lu)",
+  return [NSString stringWithFormat:@"%@ %p (successes:%tu failures:%tu responseHeaders:%tu)",
           [self class], self,
-          (unsigned long)self.successes.count,
-          (unsigned long)self.failures.count,
-          (unsigned long)self.responseHeaders.count];
+          self.successes.count, self.failures.count, self.responseHeaders.count];
 }
 
 // This class is a subclass of GTLRObject, which declares NSSecureCoding
