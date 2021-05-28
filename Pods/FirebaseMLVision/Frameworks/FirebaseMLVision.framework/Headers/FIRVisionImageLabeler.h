@@ -21,11 +21,15 @@ typedef void (^FIRVisionImageLabelerCallback)(NSArray<FIRVisionImageLabel *> *_N
  */
 typedef NS_ENUM(NSUInteger, FIRVisionImageLabelerType) {
   /** On-device image labeler type. */
-  FIRVisionImageLabelerTypeOnDevice,
+  FIRVisionImageLabelerTypeOnDevice DEPRECATED_MSG_ATTRIBUTE(
+      "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+      "guide at https://developers.google.com/ml-kit/migration"),
   /** Cloud image labeler type. */
   FIRVisionImageLabelerTypeCloud,
   /** On-device AutoML image labeler type. */
-  FIRVisionImageLabelerTypeOnDeviceAutoML,
+  FIRVisionImageLabelerTypeOnDeviceAutoML DEPRECATED_MSG_ATTRIBUTE(
+      "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+      "guide at https://developers.google.com/ml-kit/migration"),
 } NS_SWIFT_NAME(VisionImageLabelerType);
 
 /** An on-device or cloud image labeler for labeling images. */

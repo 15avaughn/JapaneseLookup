@@ -1,3 +1,19 @@
+# 2020-06-02 -- v0.20.0
+- **Breaking change:** Removed support for armv7 for FirebaseMLVisionTextModel.
+- Internal fixes to make Vision compatible with FirebaseMLCommon v0.20.0.
+
+
+# 2019-10-08 -- v0.19.0
+- **Breaking change:** On-device text recognition API for iOS no longer supports
+  i386 architecture, but continues to support x86_64, arm64, and armv7
+  architectures.
+
+# 2019-09-03 -- v0.18.0
+- Bug fixes.
+- [INTERNAL] Removed the dependency on `GoogleMobileVision` pod.
+- [INTERNAL] Changed the minimum iOS version from 9.0 to 8.0 (except for
+  `VisionBarcodeModel`, which remains at 9.0).
+
 # 2019-07-09 -- v0.17.0
 - Bug fixes.
 

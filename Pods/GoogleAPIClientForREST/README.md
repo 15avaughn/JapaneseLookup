@@ -3,7 +3,7 @@
 **Project site** <https://github.com/google/google-api-objectivec-client-for-rest><br>
 **Discussion group** <http://groups.google.com/group/google-api-objectivec-client>
 
-[![Build Status](https://travis-ci.org/google/google-api-objectivec-client-for-rest.svg?branch=master)](https://travis-ci.org/google/google-api-objectivec-client-for-rest)
+[![Build Status](https://github.com/google/google-api-objectivec-client-for-rest/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/google/google-api-objectivec-client-for-rest/actions/workflows/main.yml)
 
 Written by Google, this library is a flexible and efficient Objective-C
 framework for accessing JSON APIs.
@@ -37,9 +37,10 @@ Be sure to include
 for requests and responses when posting questions. Bugs may also be submitted
 on the [issues list](https://github.com/google/google-api-objectivec-client-for-rest/issues).
 
-**Externally-included projects**: The library includes code from the separate
-projects [GTM Session Fetcher](https://github.com/google/gtm-session-fetcher),
-[GTMAppAuth](https://github.com/google/GTMAppAuth).
+**Externally-included projects**: The library is built on top of code from the separate
+project [GTM Session Fetcher](https://github.com/google/gtm-session-fetcher). To work
+with some remote services, it also needs
+[Authentication/Authorization](https://github.com/google/google-api-objectivec-client-for-rest/wiki#authentication-and-authorization).
 
 **Google Data APIs**: The much older library for XML-based APIs is
 [still available](https://github.com/google/gdata-objectivec-client).

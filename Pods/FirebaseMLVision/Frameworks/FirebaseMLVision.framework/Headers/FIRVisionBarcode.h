@@ -36,7 +36,10 @@ typedef NS_ENUM(NSInteger, FIRVisionBarcodeValueType) {
   FIRVisionBarcodeValueTypeCalendarEvent,
   /** Barcode value type for driver's license data. */
   FIRVisionBarcodeValueTypeDriversLicense,
-} NS_SWIFT_NAME(VisionBarcodeValueType);
+} NS_SWIFT_NAME(VisionBarcodeValueType)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * @enum VisionBarcodeAddressType
@@ -49,7 +52,10 @@ typedef NS_ENUM(NSInteger, FIRVisionBarcodeAddressType) {
   FIRVisionBarcodeAddressTypeWork,
   /** Barcode home address type. */
   FIRVisionBarcodeAddressTypeHome,
-} NS_SWIFT_NAME(VisionBarcodeAddressType);
+} NS_SWIFT_NAME(VisionBarcodeAddressType)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * @enum VisionBarcodeEmailType
@@ -62,7 +68,10 @@ typedef NS_ENUM(NSInteger, FIRVisionBarcodeEmailType) {
   FIRVisionBarcodeEmailTypeWork,
   /** Barcode home email type. */
   FIRVisionBarcodeEmailTypeHome,
-} NS_SWIFT_NAME(VisionBarcodeEmailType);
+} NS_SWIFT_NAME(VisionBarcodeEmailType)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * @enum VisionBarcodePhoneType
@@ -79,7 +88,10 @@ typedef NS_ENUM(NSInteger, FIRVisionBarcodePhoneType) {
   FIRVisionBarcodePhoneTypeFax,
   /** Barcode mobile phone type. */
   FIRVisionBarcodePhoneTypeMobile,
-} NS_SWIFT_NAME(VisionBarcodePhoneType);
+} NS_SWIFT_NAME(VisionBarcodePhoneType)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * @enum VisionBarcodeWiFiEncryptionType
@@ -94,10 +106,16 @@ typedef NS_ENUM(NSInteger, FIRVisionBarcodeWiFiEncryptionType) {
   FIRVisionBarcodeWiFiEncryptionTypeWPA,
   /** Barcode WEP Wi-Fi encryption type. */
   FIRVisionBarcodeWiFiEncryptionTypeWEP,
-} NS_SWIFT_NAME(VisionBarcodeWiFiEncryptionType);
+} NS_SWIFT_NAME(VisionBarcodeWiFiEncryptionType)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /** An address. */
 NS_SWIFT_NAME(VisionBarcodeAddress)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeAddress : NSObject
 
 /**
@@ -119,6 +137,9 @@ NS_SWIFT_NAME(VisionBarcodeAddress)
 
 /** A calendar event extracted from a QR code. */
 NS_SWIFT_NAME(VisionBarcodeCalendarEvent)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeCalendarEvent : NSObject
 
 /** Calendar event description. */
@@ -154,6 +175,9 @@ NS_SWIFT_NAME(VisionBarcodeCalendarEvent)
  * `FIRVisionBarcode`s `rawValue` property can be used to access the other fields.
  */
 NS_SWIFT_NAME(VisionBarcodeDriverLicense)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeDriverLicense : NSObject
 
 /** Holder's first name. */
@@ -205,6 +229,9 @@ NS_SWIFT_NAME(VisionBarcodeDriverLicense)
 
 /** An email message from a 'MAILTO:' or similar QR Code type. */
 NS_SWIFT_NAME(VisionBarcodeEmail)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeEmail : NSObject
 
 /** Email message address. */
@@ -226,6 +253,9 @@ NS_SWIFT_NAME(VisionBarcodeEmail)
 
 /** GPS coordinates from a 'GEO:' or similar QR Code type data. */
 NS_SWIFT_NAME(VisionBarcodeGeoPoint)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeGeoPoint : NSObject
 /** A location latitude. */
 @property(nonatomic, readonly) double latitude;
@@ -240,6 +270,9 @@ NS_SWIFT_NAME(VisionBarcodeGeoPoint)
 
 /** A person's name, both formatted and as individual name components. */
 NS_SWIFT_NAME(VisionBarcodePersonName)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodePersonName : NSObject
 
 /** Properly formatted name. */
@@ -273,6 +306,9 @@ NS_SWIFT_NAME(VisionBarcodePersonName)
 
 /** A phone number from a 'TEL:' or similar QR Code type. */
 NS_SWIFT_NAME(VisionBarcodePhone)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodePhone : NSObject
 
 /** Phone number. */
@@ -288,6 +324,9 @@ NS_SWIFT_NAME(VisionBarcodePhone)
 
 /** An SMS message from an 'SMS:' or similar QR Code type. */
 NS_SWIFT_NAME(VisionBarcodeSMS)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeSMS : NSObject
 
 /** An SMS message body. */
@@ -303,6 +342,9 @@ NS_SWIFT_NAME(VisionBarcodeSMS)
 
 /** A URL and title from a 'MEBKM:' or similar QR Code type. */
 NS_SWIFT_NAME(VisionBarcodeURLBookmark)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeURLBookmark : NSObject
 
 /** A URL bookmark title. */
@@ -318,6 +360,9 @@ NS_SWIFT_NAME(VisionBarcodeURLBookmark)
 
 /** Wi-Fi network parameters from a 'WIFI:' or similar QR Code type. */
 NS_SWIFT_NAME(VisionBarcodeWifi)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeWiFi : NSObject
 
 /** A Wi-Fi access point SSID. */
@@ -343,6 +388,9 @@ NS_SWIFT_NAME(VisionBarcodeWifi)
  * raw data, use the `FIRVisionBarcode`s `rawValue` property.
  */
 NS_SWIFT_NAME(VisionBarcodeContactInfo)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcodeContactInfo : NSObject
 
 /** Person's or organization's addresses. */
@@ -373,6 +421,9 @@ NS_SWIFT_NAME(VisionBarcodeContactInfo)
 
 /** A barcode in an image. */
 NS_SWIFT_NAME(VisionBarcode)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionBarcode : NSObject
 
 /**
@@ -386,6 +437,9 @@ NS_SWIFT_NAME(VisionBarcode)
  * 'MEBKM:TITLE:Google;URL:https://www.google.com;;'. Does not include the supplemental value.
  */
 @property(nonatomic, readonly, nullable) NSString *rawValue;
+
+/** Raw data stored in barcode. */
+@property(nonatomic, readonly, nullable) NSData *rawData;
 
 /**
  * A barcode value in a user-friendly format. May omit some of the information encoded in the

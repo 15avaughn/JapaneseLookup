@@ -6,7 +6,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /** Type of all facial landmarks. */
-typedef NSString *FIRFaceLandmarkType NS_EXTENSIBLE_STRING_ENUM NS_SWIFT_NAME(FaceLandmarkType);
+typedef NSString *FIRFaceLandmarkType NS_EXTENSIBLE_STRING_ENUM NS_SWIFT_NAME(FaceLandmarkType)
+    DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /** Center of the bottom lip. */
 extern FIRFaceLandmarkType const FIRFaceLandmarkTypeMouthBottom;
@@ -40,6 +43,9 @@ extern FIRFaceLandmarkType const FIRFaceLandmarkTypeNoseBase;
 
 /** A landmark on a human face detected in an image. */
 NS_SWIFT_NAME(VisionFaceLandmark)
+DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration")
 @interface FIRVisionFaceLandmark : NSObject
 
 /** The type of the facial landmark. */

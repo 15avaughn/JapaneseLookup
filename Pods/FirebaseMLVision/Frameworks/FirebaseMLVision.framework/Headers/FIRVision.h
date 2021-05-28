@@ -63,14 +63,16 @@ NS_SWIFT_NAME(Vision)
  * @return A barcode detector configured with the given options.
  */
 - (FIRVisionBarcodeDetector *)barcodeDetectorWithOptions:(FIRVisionBarcodeDetectorOptions *)options
-    NS_SWIFT_NAME(barcodeDetector(options:));
+    NS_SWIFT_NAME(barcodeDetector(options:))DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK.");
 
 /**
  * Gets a barcode detector with the default options.
  *
  * @return A barcode detector configured with the default options.
  */
-- (FIRVisionBarcodeDetector *)barcodeDetector;
+- (FIRVisionBarcodeDetector *)barcodeDetector DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK.");
 
 /**
  * Gets a face detector with the given options.
@@ -79,14 +81,18 @@ NS_SWIFT_NAME(Vision)
  * @return A face detector configured with the given options.
  */
 - (FIRVisionFaceDetector *)faceDetectorWithOptions:(FIRVisionFaceDetectorOptions *)options
-    NS_SWIFT_NAME(faceDetector(options:));
+    NS_SWIFT_NAME(faceDetector(options:))DEPRECATED_MSG_ATTRIBUTE(
+        "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration "
+        "guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * Gets a face detector with the default options.
  *
  * @return A face detector configured with the default options.
  */
-- (FIRVisionFaceDetector *)faceDetector;
+- (FIRVisionFaceDetector *)faceDetector DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration");
 
 /**
  * Gets an on-device image labeler with the given options.
@@ -95,21 +101,28 @@ NS_SWIFT_NAME(Vision)
  * @return An on-device image labeler configured with the given options.
  */
 - (FIRVisionImageLabeler *)onDeviceImageLabelerWithOptions:
-    (FIRVisionOnDeviceImageLabelerOptions *)options NS_SWIFT_NAME(onDeviceImageLabeler(options:));
+    (FIRVisionOnDeviceImageLabelerOptions *)options NS_SWIFT_NAME(onDeviceImageLabeler(options:))
+        DEPRECATED_MSG_ATTRIBUTE(
+            "This API is deprecated and replaced by the new standalone ML Kit SDK. See the "
+            "migration guide at https://developers.google.com/ml-kit/migration");
 
 /**
  * Gets an on-device image labeler with the default options.
  *
  * @return An on-device image labeler configured with the default options.
  */
-- (FIRVisionImageLabeler *)onDeviceImageLabeler;
+- (FIRVisionImageLabeler *)onDeviceImageLabeler DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration");
 
 /**
  * Gets an on-device text recognizer.
  *
  * @return A text recognizer.
  */
-- (FIRVisionTextRecognizer *)onDeviceTextRecognizer;
+- (FIRVisionTextRecognizer *)onDeviceTextRecognizer DEPRECATED_MSG_ATTRIBUTE(
+    "This API is deprecated and replaced by the new standalone ML Kit SDK. See the migration guide "
+    "at https://developers.google.com/ml-kit/migration");
 
 /**
  * Gets a cloud text recognizer configured with the given options.
