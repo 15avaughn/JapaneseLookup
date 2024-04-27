@@ -8,7 +8,6 @@
 
 import UIKit
 import SQLite3
-import Firebase
 
 //Item passed to EditViewController
 var itemBeingEdited: Int!

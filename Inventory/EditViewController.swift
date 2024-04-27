@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import Firebase
 
 protocol MyEditProtocol {
     func setEditResult(valueSent: Item)

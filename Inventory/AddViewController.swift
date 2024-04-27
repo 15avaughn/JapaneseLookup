@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import Firebase
 
 protocol MyProtocol {
     func setAddResult(valueSent: Item)
