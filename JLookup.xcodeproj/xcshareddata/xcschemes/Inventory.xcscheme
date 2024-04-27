@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "4E35BA5722C81A710067F276"
-               BuildableName = "Inventory.app"
-               BlueprintName = "Inventory"
-               ReferencedContainer = "container:Inventory.xcodeproj">
+               BuildableName = "JLookup.app"
+               BlueprintName = "JLookup"
+               ReferencedContainer = "container:JLookup.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -31,9 +31,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "4E35BA5722C81A710067F276"
-            BuildableName = "Inventory.app"
-            BlueprintName = "Inventory"
-            ReferencedContainer = "container:Inventory.xcodeproj">
+            BuildableName = "JLookup.app"
+            BlueprintName = "JLookup"
+            ReferencedContainer = "container:JLookup.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -42,9 +42,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "4E35BA6B22C81A740067F276"
-               BuildableName = "InventoryTests.xctest"
-               BlueprintName = "InventoryTests"
-               ReferencedContainer = "container:Inventory.xcodeproj">
+               BuildableName = "JLookupTests.xctest"
+               BlueprintName = "JLookupTests"
+               ReferencedContainer = "container:JLookup.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -52,9 +52,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "4E35BA7622C81A740067F276"
-               BuildableName = "InventoryUITests.xctest"
-               BlueprintName = "InventoryUITests"
-               ReferencedContainer = "container:Inventory.xcodeproj">
+               BuildableName = "JLookupUITests.xctest"
+               BlueprintName = "JLookupUITests"
+               ReferencedContainer = "container:JLookup.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -74,9 +74,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "4E35BA5722C81A710067F276"
-            BuildableName = "Inventory.app"
-            BlueprintName = "Inventory"
-            ReferencedContainer = "container:Inventory.xcodeproj">
+            BuildableName = "JLookup.app"
+            BlueprintName = "JLookup"
+            ReferencedContainer = "container:JLookup.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -91,9 +91,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "4E35BA5722C81A710067F276"
-            BuildableName = "Inventory.app"
-            BlueprintName = "Inventory"
-            ReferencedContainer = "container:Inventory.xcodeproj">
+            BuildableName = "JLookup.app"
+            BlueprintName = "JLookup"
+            ReferencedContainer = "container:JLookup.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

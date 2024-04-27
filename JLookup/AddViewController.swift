@@ -1,5 +1,5 @@
 //
-//  EditViewController.swift
+//  AddViewController.swift
 //  Inventory
 //
 //  Created by Austin Vaughn on 6/29/19.
@@ -7,44 +7,36 @@
 //
 
 import UIKit
+import Vision
 
-protocol MyEditProtocol {
-    func setEditResult(valueSent: Item)
+protocol MyProtocol {
+    func setAddResult(valueSent: Item)
 }
 
-class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDelegate {
+class AddViewController: UIViewController, UIScrollViewDelegate, UITextFieldDelegate {
     
     //Outlets for storyboard elements
-    @IBOutlet weak var shortDescription: UITextField!
     @IBOutlet weak var longDescription: UITextView!
+    @IBOutlet weak var shortDescription: UITextField!
     @IBOutlet weak var translationImageView: UIImageView!
-    @IBOutlet weak var recognizeButton: UIButton!
     @IBOutlet weak var scrollView: UIScrollView!
+    @IBOutlet weak var recognizeButton: UIButton!
     
-    //Delegate for passing data
-    var delegate:MyEditProtocol?
-    //Objects received from ViewController
-    var shortDesc: String!
-    var longDesc: String!
+    //Image received from ViewController
     var takenImage: UIImage!
-    var imageOrientation: Int!
-    var elementsJSON: String!
-    var updatedElements: [Element] = []
-    //Vision object from Firebase for recognizing text
-    lazy var vision = Vision.vision()
+    //Delegate for passing data
+    var delegate:MyProtocol?
+    
+    var elements: [Element] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
-        self.title = "Edit Item"
+        self.title = "Add New Item"
         let save = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveItem))
         self.navigationItem.rightBarButtonItem = save
-        shortDescription.text = shortDesc
-        longDescription.text = longDesc
-        //Fixes image because its orientation isn't saved when converted to a string
-        let fixedTakenImage = UIImage(cgImage: takenImage.cgImage!, scale: takenImage.scale, orientation: UIImage.Orientation(rawValue: imageOrientation!)!)
-        translationImageView.image = fixedTakenImage
+        translationImageView.image = takenImage
         //Zooming
         scrollView.minimumZoomScale = 1.0
         scrollView.maximumZoomScale = 6.0
@@ -58,22 +50,7 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
         shortDescription.returnKeyType = .done
         shortDescription.delegate = self
         
-        //Get saved words from encoded JSON
-        let elements = try! JSONDecoder().decode([Element].self, from: elementsJSON.data(using: .utf8)!)
-        //Draw buttons for words
-        for element in elements {
-            let transformedRect = element.frame.applying(self.transformMatrix())
-            
-            let button = UIButton(frame: transformedRect)
-            button.setTitle(element.text, for: .normal)
-            button.backgroundColor = UIColor.green
-            button.alpha = 0.3
-            button.titleLabel!.adjustsFontSizeToFitWidth = false
-            button.setTitleColor(UIColor.clear, for: .normal)
-            button.addTarget(self, action: #selector(self.lookUpWord), for: .touchUpInside)
-            button.isUserInteractionEnabled = true
-            self.translationImageView.addSubview(button)
-        }
+        recognizeText(self)
         
     }
     //For keyboard dismissal
@@ -85,66 +62,91 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return translationImageView
     }
+    
+    
+    func recognizeTextHandler(request: VNRequest, error: Error?) {
+        var text = [String]()
+        
+        guard let results = request.results as? [VNRecognizedTextObservation] else {
+            return
+        }
+        
+        let maximumCandidates = 1
+        
+        for visionResult in results {
+            guard let candidate = visionResult.topCandidates(maximumCandidates).first else { continue }
+            let stringRange = candidate.string.startIndex..<candidate.string.endIndex
+            let boxObservation = try? candidate.boundingBox(for: stringRange)
+            
+            // Get the normalized CGRect value.
+            let boundingBox = boxObservation?.boundingBox ?? .zero
+            
+            let correctedBox = boundingBox.applying(CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -1))
+            
+            // Convert the rectangle from normalized coordinates to image coordinates.
+            let box = VNImageRectForNormalizedRect(correctedBox,
+                                                Int(translationImageView.image!.size.width),
+                                                Int(translationImageView.image!.size.height))
+        
+            
+            
+            self.elements.append(Element(frame: box, text: candidate.string))
+            text.append(visionResult.topCandidates(maximumCandidates).first!.string)
+            
+        }
+        
+        //Draws green transparent buttons over elements of text that were recognized
+        for element in elements {
+            let transformedRect = element.frame.applying(self.transformMatrix())
+            let button = UIButton(frame: transformedRect)
+            button.setTitle(element.text, for: .normal)
+            button.backgroundColor = UIColor.green
+            button.alpha = 0.3
+            button.titleLabel!.adjustsFontSizeToFitWidth = true
+            button.setTitleColor(UIColor.clear, for: .normal)
+            button.addTarget(self, action: #selector(self.lookUpWord), for: .touchUpInside)
+            button.isUserInteractionEnabled = true
+            self.translationImageView.addSubview(button)
+            //Re-enable zoom and button
+            
+        }
+        
+        self.longDescription.text = text.joined(separator: " ")
+        self.recognizeButton.isEnabled = true
+        self.scrollView.maximumZoomScale = 6.0
+
+    }
+    
+    
     //Recognizes text after pressing "Recognize"
     @IBAction func recognizeText(_ sender: Any) {
-        //disable button
+        //Disable button
         recognizeButton.isEnabled = false
         //Reset zoom
         scrollView.setZoomScale(1.0, animated: true)
         scrollView.maximumZoomScale = 1.0
         //Setup textRecognizer
-        let visionImage = VisionImage(image: translationImageView.image!)
-        let textRecognizer = vision.cloudTextRecognizer()
+        let visionImage = VNImageRequestHandler(cgImage: translationImageView.image!.cgImage!)
+        let textRecognizer = VNRecognizeTextRequest(completionHandler: recognizeTextHandler)
+        textRecognizer.automaticallyDetectsLanguage = true
+        textRecognizer.usesLanguageCorrection = true
         
         //Remove all element buttons
         for view in translationImageView.subviews{
             view.removeFromSuperview()
         }
         
-        
-        textRecognizer.process(visionImage) { result, error in
-            guard error == nil, let result = result else {
-                self.longDescription.text = error?.localizedDescription
-                self.recognizeButton.isEnabled = true
-                return
-            }
-            
-            //Sets longDescription to have all text that was recognized
-            self.longDescription.text = result.text
-            
-            //Draws green transparent buttons over elements of text that were recognized
-            for block in result.blocks {
-                
-                // Lines.
-                for line in block.lines {
-                    
-                    // Elements.
-                    for element in line.elements {
-                        let transformedRect = element.frame.applying(self.transformMatrix())
-                        self.updatedElements.append(Element(frame: element.frame, text: element.text))
-                        let button = UIButton(frame: transformedRect)
-                        button.setTitle(element.text, for: .normal)
-                        button.backgroundColor = UIColor.green
-                        button.alpha = 0.3
-                        button.titleLabel!.adjustsFontSizeToFitWidth = false
-                        button.setTitleColor(UIColor.clear, for: .normal)
-                        button.addTarget(self, action: #selector(self.lookUpWord), for: .touchUpInside)
-                        button.isUserInteractionEnabled = true
-                        self.translationImageView.addSubview(button)
-                    }
-                }
-            }
-            //encode recognized text
-            let data = try! JSONEncoder().encode(self.updatedElements)
-            self.elementsJSON = String(data: data, encoding: .utf8)
-            //re-enable zoom and button
-            self.recognizeButton.isEnabled = true
-            self.scrollView.maximumZoomScale = 6.0
+        do {
+            // Perform the text-recognition request.
+            try visionImage.perform([textRecognizer])
+        } catch {
+            print("Unable to perform the requests: \(error).")
         }
-        //allow zooming
         
         //dismiss keyboard
         shortDescription.resignFirstResponder()
+        //allow zooming
+        
     }
     
     //Function for buttons to be used to look up a word
@@ -182,8 +184,10 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
     //Send item back to ViewController if shortDescription is not empty
     @objc func saveItem() {
         if(!(shortDescription.text?.trimmingCharacters(in: .whitespaces).isEmpty)! && shortDescription.text != nil){
-            let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue), jsonElements: elementsJSON)
-            delegate?.setEditResult(valueSent: newItem)
+            let data = try! JSONEncoder().encode(elements)
+            
+            let newItem = Item(shortDesc: shortDescription.text ?? "", longDesc: longDescription.text, image: takenImage.toString()!, imageOrientation: String(takenImage.imageOrientation.rawValue), jsonElements: String(data: data, encoding: .utf8) ?? "")
+            delegate?.setAddResult(valueSent: newItem)
             self.navigationController?.popViewController(animated: true)
         }
         else {
@@ -192,6 +196,14 @@ class EditViewController: UIViewController, UIScrollViewDelegate, UITextFieldDel
             self.present(alert, animated: true, completion: nil)
         }
     }
-    
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        // Get the new view controller using segue.destination.
+        // Pass the selected object to the new view controller.
+    }
+    */
 
 }
